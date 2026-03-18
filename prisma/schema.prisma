@@ -1,0 +1,428 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth & Multi-tenancy ────────────────────────────────────────────────────
+
+model Business {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  phone       String?
+  email       String?
+  website     String?
+  address     String?
+  city        String?
+  state       String?
+  zip         String?
+  logoUrl     String?
+  industry    String?
+  timezone    String   @default("America/New_York")
+  isDemo      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users        User[]
+  contacts     Contact[]
+  opportunities Opportunity[]
+  estimates    Estimate[]
+  campaigns    Campaign[]
+  templates    Template[]
+  integrations Integration[]
+  calls        Call[]
+  settings     BusinessSettings?
+
+  @@map("businesses")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  passwordHash String?
+  role         UserRole  @default(MEMBER)
+  avatarUrl    String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  sessions    Session[]
+  notes       OpportunityNote[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model BusinessSettings {
+  id                    String   @id @default(cuid())
+  businessId            String   @unique
+  attributionWindowDays Int      @default(30)
+  autoEnrollEstimates   Boolean  @default(false)
+  smsOptInRequired      Boolean  @default(true)
+  notifyOnOpportunity   Boolean  @default(true)
+  notifyOnConversion    Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("business_settings")
+}
+
+// ─── Contacts ────────────────────────────────────────────────────────────────
+
+model Contact {
+  id          String        @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String?
+  phone       String?
+  address     String?
+  city        String?
+  state       String?
+  zip         String?
+  tags        String[]
+  source      String?
+  notes       String?
+  optedInSms  Boolean       @default(false)
+  optedInEmail Boolean      @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  businessId    String
+  business      Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  opportunities Opportunity[]
+  estimates     Estimate[]
+  calls         Call[]
+  campaignEnrollments CampaignEnrollment[]
+
+  @@map("contacts")
+}
+
+// ─── Opportunities ────────────────────────────────────────────────────────────
+
+model Opportunity {
+  id           String            @id @default(cuid())
+  type         OpportunityType
+  status       OpportunityStatus @default(OPEN)
+  value        Float             @default(0)
+  description  String?
+  sourceRef    String?
+  recoveredAt  DateTime?
+  dueAt        DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  contactId  String?
+  contact    Contact? @relation(fields: [contactId], references: [id])
+
+  estimateId String?
+  estimate   Estimate? @relation(fields: [estimateId], references: [id])
+
+  notes      OpportunityNote[]
+  calls      Call[]
+
+  @@map("opportunities")
+}
+
+model OpportunityNote {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id])
+
+  @@map("opportunity_notes")
+}
+
+// ─── Estimates ───────────────────────────────────────────────────────────────
+
+model Estimate {
+  id          String         @id @default(cuid())
+  externalId  String?
+  title       String?
+  amount      Float          @default(0)
+  status      EstimateStatus @default(PENDING)
+  sentAt      DateTime?
+  viewedAt    DateTime?
+  respondedAt DateTime?
+  notes       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  contactId  String?
+  contact    Contact? @relation(fields: [contactId], references: [id])
+
+  opportunities Opportunity[]
+
+  @@map("estimates")
+}
+
+// ─── Calls & SMS ─────────────────────────────────────────────────────────────
+
+model Call {
+  id          String     @id @default(cuid())
+  type        CallType
+  direction   CallDirection @default(OUTBOUND)
+  status      CallStatus @default(PENDING)
+  duration    Int?
+  recordingUrl String?
+  transcript  String?
+  body        String?
+  twilioSid   String?    @unique
+  scheduledAt DateTime?
+  startedAt   DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  contactId     String?
+  contact       Contact? @relation(fields: [contactId], references: [id])
+
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+
+  @@map("calls")
+}
+
+// ─── Campaigns ───────────────────────────────────────────────────────────────
+
+model Campaign {
+  id          String         @id @default(cuid())
+  name        String
+  type        CampaignType
+  status      CampaignStatus @default(DRAFT)
+  description String?
+  goal        String?
+  launchedAt  DateTime?
+  completedAt DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  steps       CampaignStep[]
+  enrollments CampaignEnrollment[]
+
+  @@map("campaigns")
+}
+
+model CampaignStep {
+  id          String           @id @default(cuid())
+  order       Int
+  type        CampaignStepType
+  delayDays   Int              @default(0)
+  delayHours  Int              @default(0)
+  subject     String?
+  body        String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  templateId String?
+  template   Template? @relation(fields: [templateId], references: [id])
+
+  @@map("campaign_steps")
+}
+
+model CampaignEnrollment {
+  id          String                   @id @default(cuid())
+  status      CampaignEnrollmentStatus @default(ACTIVE)
+  currentStep Int                      @default(0)
+  convertedAt DateTime?
+  exitedAt    DateTime?
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  contactId  String
+  contact    Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, contactId])
+  @@map("campaign_enrollments")
+}
+
+// ─── Templates ───────────────────────────────────────────────────────────────
+
+model Template {
+  id        String       @id @default(cuid())
+  name      String
+  type      TemplateType
+  subject   String?
+  body      String
+  variables String[]
+  isSystem  Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  campaignSteps CampaignStep[]
+
+  @@map("templates")
+}
+
+// ─── Integrations ─────────────────────────────────────────────────────────────
+
+model Integration {
+  id           String            @id @default(cuid())
+  provider     String
+  status       IntegrationStatus @default(DISCONNECTED)
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  metadata     Json?
+  connectedAt  DateTime?
+  lastSyncAt   DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, provider])
+  @@map("integrations")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MANAGER
+  MEMBER
+  READ_ONLY
+}
+
+enum OpportunityType {
+  MISSED_CALL
+  UNANSWERED_ESTIMATE
+  LOST_JOB
+  REACTIVATION
+  FOLLOW_UP
+}
+
+enum OpportunityStatus {
+  OPEN
+  IN_PROGRESS
+  WON
+  LOST
+  DISMISSED
+}
+
+enum EstimateStatus {
+  PENDING
+  VIEWED
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum CallType {
+  VOICE
+  SMS
+}
+
+enum CallDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum CallStatus {
+  PENDING
+  INITIATED
+  RINGING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  NO_ANSWER
+  BUSY
+  DELIVERED
+  UNDELIVERED
+}
+
+enum CampaignType {
+  ESTIMATE_FOLLOWUP
+  MISSED_CALL
+  REACTIVATION
+  WIN_BACK
+  REVIEW_REQUEST
+  CUSTOM
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum CampaignStepType {
+  SMS
+  EMAIL
+  WAIT
+  CONDITION
+}
+
+enum CampaignEnrollmentStatus {
+  ACTIVE
+  CONVERTED
+  EXITED
+  UNSUBSCRIBED
+  COMPLETED
+}
+
+enum TemplateType {
+  SMS
+  EMAIL
+}
+
+enum IntegrationStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+  PENDING
+}
