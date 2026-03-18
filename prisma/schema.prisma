@@ -1,0 +1,243 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Business {
+  id        String   @id @default(cuid())
+  name      String
+  industry  String   @default("home_services")
+  phone     String?
+  website   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  contacts      Contact[]
+  opportunities Opportunity[]
+  estimates     Estimate[]
+  campaigns     Campaign[]
+  templates     Template[]
+  calls         Call[]
+  integrations  Integration[]
+}
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String
+  role       Role     @default(STAFF)
+  businessId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id])
+  notes    Note[]
+}
+
+enum Role {
+  OWNER
+  MANAGER
+  STAFF
+}
+
+model Contact {
+  id         String   @id @default(cuid())
+  firstName  String
+  lastName   String
+  email      String?
+  phone      String?
+  tags       String[] @default([])
+  source     String?
+  lastJobAt  DateTime?
+  businessId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business      Business      @relation(fields: [businessId], references: [id])
+  opportunities Opportunity[]
+  estimates     Estimate[]
+  calls         Call[]
+}
+
+model Opportunity {
+  id          String            @id @default(cuid())
+  type        OpportunityType
+  status      OpportunityStatus @default(OPEN)
+  value       Float             @default(0)
+  description String?
+  contactId   String
+  businessId  String
+  resolvedAt  DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  contact  Contact  @relation(fields: [contactId], references: [id])
+  business Business @relation(fields: [businessId], references: [id])
+  notes    Note[]
+}
+
+enum OpportunityType {
+  UNSOLD_ESTIMATE
+  MISSED_CALL
+  LAPSED_CUSTOMER
+  MANUAL
+}
+
+enum OpportunityStatus {
+  OPEN
+  IN_PROGRESS
+  WON
+  LOST
+  DISMISSED
+}
+
+model Estimate {
+  id         String         @id @default(cuid())
+  number     String
+  amount     Float
+  status     EstimateStatus @default(PENDING)
+  issuedAt   DateTime
+  followUpAt DateTime?
+  contactId  String
+  businessId String
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  contact  Contact  @relation(fields: [contactId], references: [id])
+  business Business @relation(fields: [businessId], references: [id])
+}
+
+enum EstimateStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  EXPIRED
+  FOLLOW_UP
+}
+
+model Call {
+  id         String        @id @default(cuid())
+  direction  CallDirection
+  status     CallStatus
+  from       String
+  to         String
+  duration   Int           @default(0)
+  recording  String?
+  transcript String?
+  contactId  String?
+  businessId String
+  createdAt  DateTime      @default(now())
+
+  contact  Contact?  @relation(fields: [contactId], references: [id])
+  business Business  @relation(fields: [businessId], references: [id])
+  sms      Sms[]
+}
+
+enum CallDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum CallStatus {
+  COMPLETED
+  MISSED
+  VOICEMAIL
+  BUSY
+}
+
+model Sms {
+  id        String   @id @default(cuid())
+  body      String
+  from      String
+  to        String
+  callId    String?
+  createdAt DateTime @default(now())
+
+  call Call? @relation(fields: [callId], references: [id])
+}
+
+model Campaign {
+  id         String         @id @default(cuid())
+  name       String
+  type       CampaignType
+  status     CampaignStatus @default(DRAFT)
+  businessId String
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  business Business       @relation(fields: [businessId], references: [id])
+  steps    CampaignStep[]
+}
+
+enum CampaignType {
+  ESTIMATE_FOLLOWUP
+  REACTIVATION
+  MISSED_CALL
+  CUSTOM
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+model CampaignStep {
+  id         String @id @default(cuid())
+  campaignId String
+  order      Int
+  channel    String
+  templateId String?
+  delayDays  Int    @default(0)
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+
+model Template {
+  id         String       @id @default(cuid())
+  name       String
+  channel    String
+  subject    String?
+  body       String
+  variables  String[]     @default([])
+  businessId String
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id])
+}
+
+model Integration {
+  id         String            @id @default(cuid())
+  provider   String
+  status     IntegrationStatus @default(DISCONNECTED)
+  config     Json?
+  businessId String
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id])
+}
+
+enum IntegrationStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+}
+
+model Note {
+  id            String   @id @default(cuid())
+  body          String
+  authorId      String
+  opportunityId String
+  createdAt     DateTime @default(now())
+
+  author      User        @relation(fields: [authorId], references: [id])
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+}
