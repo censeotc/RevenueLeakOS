@@ -5,6 +5,8 @@ import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
+import { CSVImport } from "@/components/csv-import";
+import { useToast } from "@/components/ui/toast";
 import { demoIntegrations } from "@/lib/demo-data";
 import { timeAgo } from "@/lib/utils";
 import {
@@ -40,14 +42,27 @@ const statusIcons: Record<string, React.ReactNode> = {
 };
 
 export default function IntegrationsPage() {
+  const { success, info } = useToast();
   const [testing, setTesting] = useState<string | null>(null);
+  const [showCsvImport, setShowCsvImport] = useState(false);
 
   const handleTest = (provider: string) => {
     setTesting(provider);
-    setTimeout(() => setTesting(null), 2000);
+    setTimeout(() => {
+      setTesting(null);
+      success("Connection verified", `${provider} connection is working`);
+    }, 2000);
   };
 
   return (
+    <>
+      {showCsvImport && (
+        <CSVImport
+          mode="contacts"
+          onClose={() => setShowCsvImport(false)}
+          onImport={(rows) => success(`${rows.length} records imported`)}
+        />
+      )}
     <div>
       <TopBar title="Integrations" />
       <div className="p-6 space-y-6">
@@ -94,25 +109,32 @@ export default function IntegrationsPage() {
                           variant="outline"
                           size="sm"
                           className="flex-1"
-                          onClick={() => handleTest(integration.provider)}
+                          onClick={() => integration.provider === "csv_import"
+                            ? setShowCsvImport(true)
+                            : handleTest(integration.provider)
+                          }
                           disabled={testing === integration.provider}
                         >
                           {testing === integration.provider ? (
                             <><Loader2 className="h-3 w-3 animate-spin mr-1" /> Testing...</>
+                          ) : integration.provider === "csv_import" ? (
+                            "Import Data"
                           ) : (
                             "Test"
                           )}
                         </Button>
-                        <Button variant="destructive" size="sm" className="flex-1">
-                          Disconnect
-                        </Button>
+                        {integration.provider !== "csv_import" && (
+                          <Button variant="destructive" size="sm" className="flex-1">
+                            Disconnect
+                          </Button>
+                        )}
                       </>
                     ) : integration.status === "pending" ? (
                       <Button variant="outline" size="sm" className="flex-1">
                         Complete Setup
                       </Button>
                     ) : (
-                      <Button size="sm" className="flex-1">
+                      <Button size="sm" className="flex-1" onClick={() => info("Coming soon", `${integration.name} integration is in development`)}>
                         Connect
                       </Button>
                     )}
@@ -124,5 +146,6 @@ export default function IntegrationsPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

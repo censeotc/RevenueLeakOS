@@ -5,6 +5,7 @@ import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/toast";
 import { demoBusiness, demoUsers } from "@/lib/demo-data";
 import {
   Building2,
@@ -29,6 +30,7 @@ const settingsSections = [
 ];
 
 export default function SettingsPage() {
+  const { success } = useToast();
   const [activeSection, setActiveSection] = useState("business");
 
   return (
@@ -103,7 +105,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className="flex justify-end">
-                    <Button size="sm">Save Changes</Button>
+                    <Button size="sm" onClick={() => success("Settings saved", "Business profile updated")}>Save Changes</Button>
                   </div>
                 </CardContent>
               </Card>

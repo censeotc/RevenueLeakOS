@@ -5,6 +5,8 @@ import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { useToast } from "@/components/ui/toast";
 import { demoTemplates } from "@/lib/demo-data";
 import {
   Mail,
@@ -19,6 +21,7 @@ import {
 } from "lucide-react";
 
 export default function TemplatesPage() {
+  const { success } = useToast();
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
@@ -232,7 +235,7 @@ export default function TemplatesPage() {
             )}
 
             <div className="flex gap-2">
-              <Button className="flex-1">Save Template</Button>
+              <Button className="flex-1" onClick={() => success("Template saved", "Changes have been saved successfully")}>Save Template</Button>
               <Button variant="outline" size="icon" title="Duplicate">
                 <Copy className="h-4 w-4" />
               </Button>

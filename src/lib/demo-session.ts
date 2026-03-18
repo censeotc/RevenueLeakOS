@@ -1,3 +1,4 @@
+// Legacy compatibility - use session-context.tsx instead
 export const DEMO_BUSINESS_ID = "biz_northshore";
 export const DEMO_USER_ID = "user_owner";
 export const DEMO_BUSINESS_NAME = "North Shore Heating & Plumbing";
