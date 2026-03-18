@@ -1,26 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { usePilotData } from "@/components/providers/pilot-data-provider";
 import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { demoEstimates, getContactById } from "@/lib/demo-data";
 import { formatCurrency, daysSince } from "@/lib/utils";
-import { FileText, Clock, AlertTriangle, CheckCircle } from "lucide-react";
+import { FileText, Clock, AlertTriangle, CheckCircle, Upload } from "lucide-react";
 
 type StatusFilter = "all" | "stale" | "sent" | "viewed" | "follow_up" | "booked" | "expired";
 
 export default function EstimatesPage() {
+  const { estimates, contacts } = usePilotData();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [enrolledIds, setEnrolledIds] = useState<Set<string>>(new Set());
 
   const filtered = statusFilter === "all"
-    ? demoEstimates
-    : demoEstimates.filter((e) => e.status === statusFilter);
+    ? estimates
+    : estimates.filter((e) => e.status === statusFilter);
 
-  const staleCount = demoEstimates.filter((e) => e.status === "stale").length;
-  const totalStaleValue = demoEstimates
+  const staleCount = estimates.filter((e) => e.status === "stale").length;
+  const totalStaleValue = estimates
     .filter((e) => e.status === "stale")
     .reduce((sum, e) => sum + e.amount, 0);
 
@@ -37,6 +39,14 @@ export default function EstimatesPage() {
     <div>
       <TopBar title="Estimates" />
       <div className="p-6 space-y-6">
+        <div className="flex justify-end">
+          <Link href="/imports?entity=estimates">
+            <Button variant="outline" size="sm">
+              <Upload className="mr-1 h-4 w-4" />
+              CSV Import
+            </Button>
+          </Link>
+        </div>
         {/* Summary */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
@@ -72,7 +82,7 @@ export default function EstimatesPage() {
                   <FileText className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{demoEstimates.length}</p>
+                  <p className="text-2xl font-bold">{estimates.length}</p>
                   <p className="text-xs text-muted-foreground">Total Estimates</p>
                 </div>
               </div>
@@ -85,7 +95,7 @@ export default function EstimatesPage() {
                   <CheckCircle className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{demoEstimates.filter((e) => e.status === "booked").length}</p>
+                  <p className="text-2xl font-bold">{estimates.filter((e) => e.status === "booked").length}</p>
                   <p className="text-xs text-muted-foreground">Booked</p>
                 </div>
               </div>
@@ -125,7 +135,7 @@ export default function EstimatesPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.map((est) => {
-                  const contact = getContactById(est.contactId);
+                  const contact = contacts.find((item) => item.id === est.contactId);
                   const age = daysSince(est.sentAt);
                   const enrolled = enrolledIds.has(est.id);
                   return (

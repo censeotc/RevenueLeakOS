@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { usePilotData } from "@/components/providers/pilot-data-provider";
 import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { demoContacts, demoOpportunities } from "@/lib/demo-data";
+import type { PilotDataSnapshot } from "@/services/pilot-data";
 import { formatCurrency, daysSince } from "@/lib/utils";
 import {
   Users,
@@ -22,24 +23,25 @@ interface Segment {
   description: string;
   icon: React.ReactNode;
   criteria: string;
-  contacts: typeof demoContacts;
+  contacts: PilotDataSnapshot["contacts"];
   estimatedValue: number;
 }
 
 export default function ReactivationPage() {
+  const { contacts, opportunities } = usePilotData();
   const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
   const [launchedCampaigns, setLaunchedCampaigns] = useState<Set<string>>(new Set());
 
-  const noService12Months = demoContacts.filter(
+  const noService12Months = contacts.filter(
     (c) => c.lastServiceDate && daysSince(c.lastServiceDate) > 365
   );
-  const maintenanceDue = demoContacts.filter(
+  const maintenanceDue = contacts.filter(
     (c) => c.lastServiceDate && daysSince(c.lastServiceDate) > 180 && c.tags.includes("maintenance")
   );
-  const membershipRenewal = demoContacts.filter(
+  const membershipRenewal = contacts.filter(
     (c) => c.lastServiceDate && daysSince(c.lastServiceDate) > 330 && c.lifetimeValue > 3000
   );
-  const replacementCycle = demoContacts.filter(
+  const replacementCycle = contacts.filter(
     (c) => c.lastServiceDate && daysSince(c.lastServiceDate) > 450 && c.tags.includes("hvac")
   );
 
@@ -84,7 +86,7 @@ export default function ReactivationPage() {
 
   const activeSegment = segments.find((s) => s.id === selectedSegment);
 
-  const reactivationOpps = demoOpportunities.filter((o) => o.type === "reactivation");
+  const reactivationOpps = opportunities.filter((o) => o.type === "reactivation");
 
   return (
     <div>

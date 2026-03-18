@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { usePilotData } from "@/components/providers/pilot-data-provider";
 import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { demoCampaigns, demoTemplates } from "@/lib/demo-data";
 import { getOpportunityTypeLabel } from "@/lib/utils";
 import {
   Megaphone,
@@ -31,15 +31,16 @@ const stepTypeIcons: Record<string, React.ReactNode> = {
 };
 
 export default function CampaignsPage() {
+  const { campaigns, templates } = usePilotData();
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
   const filtered = statusFilter
-    ? demoCampaigns.filter((c) => c.status === statusFilter)
-    : demoCampaigns;
+    ? campaigns.filter((c) => c.status === statusFilter)
+    : campaigns;
 
-  const selected = selectedCampaign ? demoCampaigns.find((c) => c.id === selectedCampaign) : null;
+  const selected = selectedCampaign ? campaigns.find((c) => c.id === selectedCampaign) : null;
 
   return (
     <div className="flex h-full">
@@ -53,7 +54,7 @@ export default function CampaignsPage() {
                 size="sm"
                 onClick={() => setStatusFilter(null)}
               >
-                All ({demoCampaigns.length})
+                All ({campaigns.length})
               </Button>
               {["active", "draft", "paused", "completed"].map((s) => (
                 <Button
@@ -62,7 +63,7 @@ export default function CampaignsPage() {
                   size="sm"
                   onClick={() => setStatusFilter(s)}
                 >
-                  {s.charAt(0).toUpperCase() + s.slice(1)} ({demoCampaigns.filter((c) => c.status === s).length})
+                  {s.charAt(0).toUpperCase() + s.slice(1)} ({campaigns.filter((c) => c.status === s).length})
                 </Button>
               ))}
             </div>
@@ -223,7 +224,7 @@ export default function CampaignsPage() {
               <h3 className="text-sm font-semibold mb-3">Campaign Steps</h3>
               <div className="space-y-3">
                 {selected.steps.map((step, i) => {
-                  const template = step.templateId ? demoTemplates.find((t) => t.id === step.templateId) : null;
+                  const template = step.templateId ? templates.find((t) => t.id === step.templateId) : null;
                   return (
                     <div key={step.id} className="relative">
                       {i > 0 && (

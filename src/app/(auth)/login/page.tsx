@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Zap } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/dashboard";
+  const demoLoginHref = `/demo/login?next=${encodeURIComponent(next)}`;
 
   const handleDemoLogin = () => {
-    router.push("/app/dashboard");
+    window.location.assign(demoLoginHref);
   };
 
   return (
@@ -47,7 +49,7 @@ export default function LoginPage() {
               />
             </div>
             <Button className="w-full" onClick={handleDemoLogin}>
-              Sign In
+              Sign In to Demo Workspace
             </Button>
           </div>
 
@@ -61,7 +63,7 @@ export default function LoginPage() {
           </div>
 
           <Button variant="outline" className="w-full" onClick={handleDemoLogin}>
-            Enter Demo Mode
+            Enter Demo Walkthrough
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">

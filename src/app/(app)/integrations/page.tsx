@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { usePilotData } from "@/components/providers/pilot-data-provider";
 import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { demoIntegrations } from "@/lib/demo-data";
 import { timeAgo } from "@/lib/utils";
 import {
   Phone,
@@ -40,6 +40,7 @@ const statusIcons: Record<string, React.ReactNode> = {
 };
 
 export default function IntegrationsPage() {
+  const { integrations } = usePilotData();
   const [testing, setTesting] = useState<string | null>(null);
 
   const handleTest = (provider: string) => {
@@ -57,7 +58,7 @@ export default function IntegrationsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {demoIntegrations.map((integration) => (
+          {integrations.map((integration) => (
             <Card key={integration.provider} className="hover:shadow-md transition-shadow">
               <CardContent className="pt-4">
                 <div className="flex items-start justify-between">

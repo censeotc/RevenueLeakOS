@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Zap, Building2, Phone, ArrowRight, CheckCircle2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 const steps = [
   { id: 1, title: "Business Info", description: "Tell us about your company" },
@@ -15,10 +14,9 @@ const steps = [
 
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
-  const router = useRouter();
 
   const handleComplete = () => {
-    router.push("/app/dashboard");
+    window.location.assign("/demo/login?next=/dashboard");
   };
 
   return (

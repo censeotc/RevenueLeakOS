@@ -193,11 +193,11 @@ export const dashboardSummary = {
 };
 
 export const demoAlerts = [
-  { id: "alert_01", type: "missed_call" as const, title: "New missed call", description: "Mark Walker called 1 hour ago - no response yet", timestamp: hoursAgo(1), read: false, linkTo: "/app/opportunities" },
-  { id: "alert_02", type: "missed_call" as const, title: "New missed call", description: "Robert Anderson called 2 hours ago", timestamp: hoursAgo(2), read: false, linkTo: "/app/opportunities" },
-  { id: "alert_03", type: "stale_estimate" as const, title: "Estimate going stale", description: "EST-2026-008 for Paul Martinez ($12,500) - 11 days old", timestamp: daysAgo(1), read: false, linkTo: "/app/estimates" },
-  { id: "alert_04", type: "high_value" as const, title: "High-value opportunity", description: "Thomas Garcia responded to $8,500 HVAC maintenance estimate", timestamp: daysAgo(2), read: true, linkTo: "/app/opportunities" },
-  { id: "alert_05", type: "campaign_complete" as const, title: "Campaign milestone", description: "Winter Furnace Check-Up: 6 bookings from 45 targets", timestamp: daysAgo(3), read: true, linkTo: "/app/campaigns" },
+  { id: "alert_01", type: "missed_call" as const, title: "New missed call", description: "Mark Walker called 1 hour ago - no response yet", timestamp: hoursAgo(1), read: false, linkTo: "/opportunities" },
+  { id: "alert_02", type: "missed_call" as const, title: "New missed call", description: "Robert Anderson called 2 hours ago", timestamp: hoursAgo(2), read: false, linkTo: "/opportunities" },
+  { id: "alert_03", type: "stale_estimate" as const, title: "Estimate going stale", description: "EST-2026-008 for Paul Martinez ($12,500) - 11 days old", timestamp: daysAgo(1), read: false, linkTo: "/estimates" },
+  { id: "alert_04", type: "high_value" as const, title: "High-value opportunity", description: "Thomas Garcia responded to $8,500 HVAC maintenance estimate", timestamp: daysAgo(2), read: true, linkTo: "/opportunities" },
+  { id: "alert_05", type: "campaign_complete" as const, title: "Campaign milestone", description: "Winter Furnace Check-Up: 6 bookings from 45 targets", timestamp: daysAgo(3), read: true, linkTo: "/campaigns" },
 ];
 
 export function getContactById(id: string) {

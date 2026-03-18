@@ -1,23 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { usePilotData } from "@/components/providers/pilot-data-provider";
 import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import {
-  demoOpportunities,
-  demoMessages,
-  getContactById,
-  getUserById,
-  demoUsers,
-} from "@/lib/demo-data";
 import { formatCurrency, timeAgo, getOpportunityTypeLabel, getOpportunityTypeColor } from "@/lib/utils";
 import { Target, X, MessageSquare, User, Plus } from "lucide-react";
 
 type FilterType = "all" | "missed_call" | "estimate_rescue" | "reactivation";
 
 export default function OpportunitiesPage() {
+  const { opportunities, messages, contacts, users } = usePilotData();
   const [filter, setFilter] = useState<FilterType>("all");
   const [selectedOpp, setSelectedOpp] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
@@ -25,19 +20,21 @@ export default function OpportunitiesPage() {
 
   const filtered =
     filter === "all"
-      ? demoOpportunities
-      : demoOpportunities.filter((o) => o.type === filter);
+      ? opportunities
+      : opportunities.filter((o) => o.type === filter);
 
-  const selected = selectedOpp ? demoOpportunities.find((o) => o.id === selectedOpp) : null;
-  const selectedContact = selected ? getContactById(selected.contactId) : null;
-  const selectedAssignee = selected?.assignedToId ? getUserById(selected.assignedToId) : null;
-  const selectedMessages = selected ? demoMessages.filter((m) => m.opportunityId === selected.id) : [];
+  const selected = selectedOpp ? opportunities.find((o) => o.id === selectedOpp) : null;
+  const selectedContact = selected ? contacts.find((contact) => contact.id === selected.contactId) : null;
+  const selectedAssignee = selected?.assignedToId
+    ? users.find((user) => user.id === selected.assignedToId)
+    : null;
+  const selectedMessages = selected ? messages.filter((m) => m.opportunityId === selected.id) : [];
 
   const filterCounts = {
-    all: demoOpportunities.length,
-    missed_call: demoOpportunities.filter((o) => o.type === "missed_call").length,
-    estimate_rescue: demoOpportunities.filter((o) => o.type === "estimate_rescue").length,
-    reactivation: demoOpportunities.filter((o) => o.type === "reactivation").length,
+    all: opportunities.length,
+    missed_call: opportunities.filter((o) => o.type === "missed_call").length,
+    estimate_rescue: opportunities.filter((o) => o.type === "estimate_rescue").length,
+    reactivation: opportunities.filter((o) => o.type === "reactivation").length,
   };
 
   const addNote = () => {
@@ -89,8 +86,10 @@ export default function OpportunitiesPage() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {filtered.map((opp) => {
-                      const contact = getContactById(opp.contactId);
-                      const assignee = opp.assignedToId ? getUserById(opp.assignedToId) : null;
+                      const contact = contacts.find((item) => item.id === opp.contactId);
+                      const assignee = opp.assignedToId
+                        ? users.find((item) => item.id === opp.assignedToId)
+                        : null;
                       return (
                         <tr
                           key={opp.id}
@@ -196,7 +195,7 @@ export default function OpportunitiesPage() {
               <p className="text-xs text-muted-foreground mb-2">Assigned To</p>
               <select className="w-full rounded-lg border border-input px-3 py-2 text-sm bg-background">
                 <option value="">Unassigned</option>
-                {demoUsers.map((u) => (
+                {users.map((u) => (
                   <option key={u.id} value={u.id} selected={u.id === selected.assignedToId}>
                     {u.name}
                   </option>

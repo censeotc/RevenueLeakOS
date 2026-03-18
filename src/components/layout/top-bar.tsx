@@ -1,14 +1,21 @@
 "use client";
 
+import { usePilotSession } from "@/components/providers/pilot-data-provider";
 import { Bell, Search } from "lucide-react";
-import { DEMO_BUSINESS_NAME } from "@/lib/demo-session";
 
 export function TopBar({ title }: { title: string }) {
+  const session = usePilotSession();
+
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-white px-6">
       <div>
         <h1 className="text-lg font-semibold text-foreground">{title}</h1>
-        <p className="text-xs text-muted-foreground">{DEMO_BUSINESS_NAME}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-xs text-muted-foreground">{session.businessName}</p>
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+            Demo
+          </span>
+        </div>
       </div>
       <div className="flex items-center gap-3">
         <div className="relative">

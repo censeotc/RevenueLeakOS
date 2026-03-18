@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { usePilotSession } from "@/components/providers/pilot-data-provider";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -18,26 +19,30 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  Route,
+  LogOut,
 } from "lucide-react";
 import { useState } from "react";
 
 const navItems = [
-  { href: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/app/opportunities", label: "Opportunities", icon: Target },
-  { href: "/app/calls", label: "Calls", icon: Phone },
-  { href: "/app/estimates", label: "Estimates", icon: FileText },
-  { href: "/app/reactivation", label: "Reactivation", icon: RefreshCw },
-  { href: "/app/reports", label: "Reports", icon: BarChart3 },
-  { href: "/app/contacts", label: "Contacts", icon: Users },
-  { href: "/app/campaigns", label: "Campaigns", icon: Megaphone },
-  { href: "/app/templates", label: "Templates", icon: Mail },
-  { href: "/app/integrations", label: "Integrations", icon: Plug },
-  { href: "/app/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/opportunities", label: "Opportunities", icon: Target },
+  { href: "/calls", label: "Calls", icon: Phone },
+  { href: "/estimates", label: "Estimates", icon: FileText },
+  { href: "/reactivation", label: "Reactivation", icon: RefreshCw },
+  { href: "/reports", label: "Reports", icon: BarChart3 },
+  { href: "/contacts", label: "Contacts", icon: Users },
+  { href: "/campaigns", label: "Campaigns", icon: Megaphone },
+  { href: "/templates", label: "Templates", icon: Mail },
+  { href: "/integrations", label: "Integrations", icon: Plug },
+  { href: "/walkthrough", label: "Walkthrough", icon: Route },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const session = usePilotSession();
 
   return (
     <aside
@@ -97,15 +102,30 @@ export function Sidebar() {
       <div className="border-t border-border p-3">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">
-            MK
+            {session.user.name
+              .split(" ")
+              .map((part) => part[0])
+              .join("")
+              .slice(0, 2)}
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-medium">Mike Kowalski</span>
-              <span className="text-xs text-muted-foreground">Owner</span>
+              <span className="text-sm font-medium">{session.user.name}</span>
+              <span className="text-xs capitalize text-muted-foreground">{session.user.role}</span>
             </div>
           )}
         </div>
+        <Link
+          href="/demo/logout"
+          className={cn(
+            "mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+            collapsed && "justify-center px-2"
+          )}
+          title={collapsed ? "Sign out" : undefined}
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed && <span>Sign out</span>}
+        </Link>
       </div>
     </aside>
   );

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { usePilotData } from "@/components/providers/pilot-data-provider";
 import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { demoBusiness, demoUsers } from "@/lib/demo-data";
 import {
   Building2,
   Users,
@@ -29,6 +29,7 @@ const settingsSections = [
 ];
 
 export default function SettingsPage() {
+  const { business, users } = usePilotData();
   const [activeSection, setActiveSection] = useState("business");
 
   return (
@@ -65,15 +66,15 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium block mb-1">Business Name</label>
-                      <input className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={demoBusiness.name} />
+                      <input className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={business.name} />
                     </div>
                     <div>
                       <label className="text-sm font-medium block mb-1">Phone</label>
-                      <input className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={demoBusiness.phone || ""} />
+                      <input className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={business.phone || ""} />
                     </div>
                     <div>
                       <label className="text-sm font-medium block mb-1">Email</label>
-                      <input className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={demoBusiness.email || ""} />
+                      <input className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={business.email || ""} />
                     </div>
                     <div>
                       <label className="text-sm font-medium block mb-1">Website</label>
@@ -81,19 +82,19 @@ export default function SettingsPage() {
                     </div>
                     <div>
                       <label className="text-sm font-medium block mb-1">Address</label>
-                      <input className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={demoBusiness.address || ""} />
+                      <input className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={business.address || ""} />
                     </div>
                     <div>
                       <label className="text-sm font-medium block mb-1">City</label>
-                      <input className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={demoBusiness.city || ""} />
+                      <input className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={business.city || ""} />
                     </div>
                     <div>
                       <label className="text-sm font-medium block mb-1">State</label>
-                      <input className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={demoBusiness.state || ""} />
+                      <input className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={business.state || ""} />
                     </div>
                     <div>
                       <label className="text-sm font-medium block mb-1">Timezone</label>
-                      <select className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={demoBusiness.timezone}>
+                      <select className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={business.timezone}>
                         <option value="America/Detroit">America/Detroit (EST)</option>
                         <option value="America/New_York">America/New_York (EST)</option>
                         <option value="America/Chicago">America/Chicago (CST)</option>
@@ -129,7 +130,7 @@ export default function SettingsPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {demoUsers.map((user) => (
+                      {users.map((user) => (
                         <tr key={user.id} className="hover:bg-muted/30">
                           <td className="px-4 py-3 font-medium">{user.name}</td>
                           <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
@@ -226,19 +227,19 @@ export default function SettingsPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium block mb-1">Attribution Window (days)</label>
-                      <input type="number" className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={demoBusiness.attributionWindowDays} />
+                      <input type="number" className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={business.attributionWindowDays} />
                     </div>
                     <div>
                       <label className="text-sm font-medium block mb-1">Stale Estimate Threshold (days)</label>
-                      <input type="number" className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={demoBusiness.staleEstimateDays} />
+                      <input type="number" className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={business.staleEstimateDays} />
                     </div>
                     <div>
                       <label className="text-sm font-medium block mb-1">High Value Threshold ($)</label>
-                      <input type="number" className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={demoBusiness.highValueThreshold} />
+                      <input type="number" className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={business.highValueThreshold} />
                     </div>
                     <div>
                       <label className="text-sm font-medium block mb-1">Missed Call Suppression (hours)</label>
-                      <input type="number" className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={demoBusiness.missedCallSuppressionHours} />
+                      <input type="number" className="w-full h-9 rounded-lg border border-input px-3 text-sm bg-background" defaultValue={business.missedCallSuppressionHours} />
                     </div>
                   </div>
                   <div className="flex justify-end">

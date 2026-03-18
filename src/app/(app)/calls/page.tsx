@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { usePilotData } from "@/components/providers/pilot-data-provider";
 import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { demoCallEvents, demoMessages, getContactById, demoOpportunities } from "@/lib/demo-data";
 import { timeAgo } from "@/lib/utils";
 import { Phone, PhoneIncoming, PhoneOutgoing, MessageSquare, CalendarCheck } from "lucide-react";
 
@@ -22,20 +22,23 @@ const tabs: { value: CallTab; label: string }[] = [
 ];
 
 export default function CallsPage() {
+  const { callEvents, messages, contacts, opportunities } = usePilotData();
   const [tab, setTab] = useState<CallTab>("all");
   const [selectedCall, setSelectedCall] = useState<string | null>(null);
 
   const filtered = tab === "all"
-    ? demoCallEvents
-    : demoCallEvents.filter((c) => c.status === tab);
+    ? callEvents
+    : callEvents.filter((c) => c.status === tab);
 
-  const selected = selectedCall ? demoCallEvents.find((c) => c.id === selectedCall) : null;
+  const selected = selectedCall ? callEvents.find((c) => c.id === selectedCall) : null;
   const selectedOpp = selected?.opportunityId
-    ? demoOpportunities.find((o) => o.id === selected.opportunityId)
+    ? opportunities.find((o) => o.id === selected.opportunityId)
     : null;
-  const selectedContact = selected?.contactId ? getContactById(selected.contactId) : null;
+  const selectedContact = selected?.contactId
+    ? contacts.find((contact) => contact.id === selected.contactId)
+    : null;
   const smsThread = selected?.opportunityId
-    ? demoMessages.filter((m) => m.opportunityId === selected.opportunityId)
+    ? messages.filter((m) => m.opportunityId === selected.opportunityId)
     : [];
 
   return (
@@ -52,7 +55,7 @@ export default function CallsPage() {
                     <Phone className="h-4 w-4 text-red-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{demoCallEvents.filter((c) => c.status === "missed").length}</p>
+                    <p className="text-2xl font-bold">{callEvents.filter((c) => c.status === "missed").length}</p>
                     <p className="text-xs text-muted-foreground">Missed</p>
                   </div>
                 </div>
@@ -65,7 +68,7 @@ export default function CallsPage() {
                     <PhoneIncoming className="h-4 w-4 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{demoCallEvents.filter((c) => c.status === "responded").length}</p>
+                    <p className="text-2xl font-bold">{callEvents.filter((c) => c.status === "responded").length}</p>
                     <p className="text-xs text-muted-foreground">Responded</p>
                   </div>
                 </div>
@@ -78,7 +81,7 @@ export default function CallsPage() {
                     <CalendarCheck className="h-4 w-4 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{demoCallEvents.filter((c) => c.status === "booked").length}</p>
+                    <p className="text-2xl font-bold">{callEvents.filter((c) => c.status === "booked").length}</p>
                     <p className="text-xs text-muted-foreground">Booked</p>
                   </div>
                 </div>
@@ -91,7 +94,7 @@ export default function CallsPage() {
                     <PhoneOutgoing className="h-4 w-4 text-amber-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{demoCallEvents.filter((c) => c.status === "after_hours").length}</p>
+                    <p className="text-2xl font-bold">{callEvents.filter((c) => c.status === "after_hours").length}</p>
                     <p className="text-xs text-muted-foreground">After Hours</p>
                   </div>
                 </div>
@@ -113,7 +116,7 @@ export default function CallsPage() {
               >
                 {t.label}
                 <span className="ml-1 text-xs">
-                  ({t.value === "all" ? demoCallEvents.length : demoCallEvents.filter((c) => c.status === t.value).length})
+                  ({t.value === "all" ? callEvents.length : callEvents.filter((c) => c.status === t.value).length})
                 </span>
               </button>
             ))}
@@ -136,9 +139,13 @@ export default function CallsPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {filtered.map((call) => {
-                    const contact = call.contactId ? getContactById(call.contactId) : null;
-                    const opp = call.opportunityId ? demoOpportunities.find((o) => o.id === call.opportunityId) : null;
-                    const hasSms = demoMessages.some((m) => m.opportunityId === call.opportunityId);
+                    const contact = call.contactId
+                      ? contacts.find((item) => item.id === call.contactId)
+                      : null;
+                    const opp = call.opportunityId
+                      ? opportunities.find((item) => item.id === call.opportunityId)
+                      : null;
+                    const hasSms = messages.some((m) => m.opportunityId === call.opportunityId);
                     return (
                       <tr
                         key={call.id}

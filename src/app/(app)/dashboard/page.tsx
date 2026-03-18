@@ -1,17 +1,11 @@
 "use client";
 
+import { usePilotData } from "@/components/providers/pilot-data-provider";
 import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import {
-  dashboardSummary,
-  demoAlerts,
-  demoActivityLogs,
-  demoOpportunities,
-  getContactById,
-  getUserById,
-} from "@/lib/demo-data";
+import type { PilotDataSnapshot } from "@/services/pilot-data";
 import { formatCurrency, formatMinutes, timeAgo, getOpportunityTypeLabel } from "@/lib/utils";
 import {
   DollarSign,
@@ -28,16 +22,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const kpiCards = [
-  { label: "Revenue Influenced", value: formatCurrency(dashboardSummary.revenueInfluenced), icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50", trend: "+22%" },
-  { label: "Opportunities Recovered", value: dashboardSummary.opportunitiesRecovered.toString(), icon: Target, color: "text-blue-600", bg: "bg-blue-50", trend: "+33%" },
-  { label: "Bookings Created", value: dashboardSummary.bookingsCreated.toString(), icon: CalendarCheck, color: "text-purple-600", bg: "bg-purple-50", trend: "+14%" },
-  { label: "Avg Response Time", value: formatMinutes(dashboardSummary.avgResponseMinutes), icon: Clock, color: "text-amber-600", bg: "bg-amber-50", trend: "-25%" },
-  { label: "Estimates Reopened", value: dashboardSummary.estimatesReopened.toString(), icon: FileText, color: "text-orange-600", bg: "bg-orange-50", trend: "+50%" },
-  { label: "Customers Reactivated", value: dashboardSummary.customersReactivated.toString(), icon: UserPlus, color: "text-cyan-600", bg: "bg-cyan-50", trend: "+50%" },
-];
+type ActivityLogItem = PilotDataSnapshot["activityLogs"][number];
 
-function getActivityDescription(log: typeof demoActivityLogs[0]) {
+function getActivityDescription(log: ActivityLogItem) {
   const meta = log.metadata as Record<string, unknown>;
   switch (log.action) {
     case "opportunity.created":
@@ -74,10 +61,19 @@ function getActivityIcon(action: string) {
 }
 
 export default function DashboardPage() {
-  const activeOpportunities = demoOpportunities.filter(
+  const { dashboardSummary, alerts, activityLogs, opportunities, contacts, users } = usePilotData();
+  const kpiCards = [
+    { label: "Revenue Influenced", value: formatCurrency(dashboardSummary.revenueInfluenced), icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50", trend: "+22%" },
+    { label: "Opportunities Recovered", value: dashboardSummary.opportunitiesRecovered.toString(), icon: Target, color: "text-blue-600", bg: "bg-blue-50", trend: "+33%" },
+    { label: "Bookings Created", value: dashboardSummary.bookingsCreated.toString(), icon: CalendarCheck, color: "text-purple-600", bg: "bg-purple-50", trend: "+14%" },
+    { label: "Avg Response Time", value: formatMinutes(dashboardSummary.avgResponseMinutes), icon: Clock, color: "text-amber-600", bg: "bg-amber-50", trend: "-25%" },
+    { label: "Estimates Reopened", value: dashboardSummary.estimatesReopened.toString(), icon: FileText, color: "text-orange-600", bg: "bg-orange-50", trend: "+50%" },
+    { label: "Customers Reactivated", value: dashboardSummary.customersReactivated.toString(), icon: UserPlus, color: "text-cyan-600", bg: "bg-cyan-50", trend: "+50%" },
+  ];
+  const activeOpportunities = opportunities.filter(
     (o) => !["won", "lost", "closed"].includes(o.status)
   );
-  const unreadAlerts = demoAlerts.filter((a) => !a.read);
+  const unreadAlerts = alerts.filter((a) => !a.read);
 
   return (
     <div>
@@ -111,13 +107,13 @@ export default function DashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
-                <Link href="/app/opportunities" className="text-sm text-primary hover:underline">
+                <Link href="/opportunities" className="text-sm text-primary hover:underline">
                   View all
                 </Link>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-border">
-                  {demoActivityLogs.slice(0, 8).map((log) => (
+                  {activityLogs.slice(0, 8).map((log) => (
                     <div key={log.id} className="flex items-start gap-3 px-4 py-3">
                       <div className="mt-0.5 rounded-lg bg-muted p-1.5 text-muted-foreground">
                         {getActivityIcon(log.action)}
@@ -153,7 +149,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-border">
-                  {demoAlerts.map((alert) => (
+                  {alerts.map((alert) => (
                     <Link
                       key={alert.id}
                       href={alert.linkTo || "#"}
@@ -178,7 +174,7 @@ export default function DashboardPage() {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Link href="/app/calls">
+                <Link href="/calls">
                   <Button variant="outline" className="w-full justify-between" size="sm">
                     <span className="flex items-center gap-2">
                       <Phone className="h-4 w-4" />
@@ -187,7 +183,7 @@ export default function DashboardPage() {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href="/app/estimates">
+                <Link href="/estimates">
                   <Button variant="outline" className="w-full justify-between" size="sm">
                     <span className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
@@ -196,7 +192,7 @@ export default function DashboardPage() {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href="/app/reactivation">
+                <Link href="/reactivation">
                   <Button variant="outline" className="w-full justify-between" size="sm">
                     <span className="flex items-center gap-2">
                       <UserPlus className="h-4 w-4" />
@@ -205,7 +201,7 @@ export default function DashboardPage() {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href="/app/campaigns">
+                <Link href="/campaigns">
                   <Button variant="outline" className="w-full justify-between" size="sm">
                     <span className="flex items-center gap-2">
                       <TrendingUp className="h-4 w-4" />
@@ -223,7 +219,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Active Opportunities ({activeOpportunities.length})</CardTitle>
-            <Link href="/app/opportunities" className="text-sm text-primary hover:underline flex items-center gap-1">
+            <Link href="/opportunities" className="text-sm text-primary hover:underline flex items-center gap-1">
               View all <ArrowRight className="h-3 w-3" />
             </Link>
           </CardHeader>
@@ -243,8 +239,10 @@ export default function DashboardPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {activeOpportunities.slice(0, 6).map((opp) => {
-                    const contact = getContactById(opp.contactId);
-                    const assignee = opp.assignedToId ? getUserById(opp.assignedToId) : null;
+                    const contact = contacts.find((item) => item.id === opp.contactId);
+                    const assignee = opp.assignedToId
+                      ? users.find((item) => item.id === opp.assignedToId)
+                      : null;
                     return (
                       <tr key={opp.id} className="hover:bg-muted/30">
                         <td className="px-4 py-3 font-medium">{opp.title}</td>

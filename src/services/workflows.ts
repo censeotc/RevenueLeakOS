@@ -1,4 +1,5 @@
-import { sendSMS, simulateInboundCall, simulateInboundSMS } from "./twilio";
+import { getTwilioService } from "./twilio";
+import { twilioMockService } from "./twilio-mock";
 
 export interface MissedCallWorkflowInput {
   callerNumber: string;
@@ -38,16 +39,21 @@ export interface MissedCallWorkflowResult {
 export async function executeMissedCallWorkflow(
   input: MissedCallWorkflowInput
 ): Promise<MissedCallWorkflowResult> {
+  const twilio = getTwilioService();
   const callId = `call_mock_${Date.now()}`;
   const contactId = `ct_mock_${Date.now()}`;
   const oppId = `opp_mock_${Date.now()}`;
   const msgId = `msg_mock_${Date.now()}`;
+  const inboundCall = await twilio.simulateInboundCall({
+    from: input.callerNumber,
+    to: input.calledNumber,
+  });
 
   const callEvent = {
     id: callId,
     callerNumber: input.callerNumber,
     status: "missed" as const,
-    callTime: new Date(),
+    callTime: inboundCall.timestamp,
   };
 
   const firstName = input.callerName?.split(" ")[0] || "Customer";
@@ -67,9 +73,13 @@ export async function executeMissedCallWorkflow(
     title: `Missed call - ${firstName} ${lastName}`.trim(),
   };
 
-  const smsBody = `Hi ${firstName}, we missed your call at ${input.businessName}! We're sorry we couldn't pick up. How can we help? Reply here or call us back at ${input.businessPhone}.`;
+  const smsBody = twilioMockService.buildMissedCallReplyTemplate(
+    firstName,
+    input.businessName,
+    input.businessPhone
+  );
 
-  const smsResult = await sendSMS({
+  const smsResult = await twilio.sendSMS({
     to: input.callerNumber,
     from: input.calledNumber,
     body: smsBody,
@@ -91,7 +101,7 @@ export interface SimulateReplyInput {
 }
 
 export async function simulateReply(input: SimulateReplyInput) {
-  const inbound = await simulateInboundSMS(input.fromNumber, input.body);
+  const inbound = await getTwilioService().simulateInboundSMS(input.fromNumber, input.body);
   return {
     messageEvent: {
       id: `msg_mock_${Date.now()}`,

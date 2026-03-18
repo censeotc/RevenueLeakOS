@@ -1,22 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { usePilotData } from "@/components/providers/pilot-data-provider";
 import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { demoContacts, demoOpportunities } from "@/lib/demo-data";
 import { formatCurrency, daysSince, timeAgo } from "@/lib/utils";
 import { Users, Upload, Search, X, Target } from "lucide-react";
 
 export default function ContactsPage() {
+  const { contacts, opportunities } = usePilotData();
   const [search, setSearch] = useState("");
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
 
-  const allTags = Array.from(new Set(demoContacts.flatMap((c) => c.tags))).sort();
+  const allTags = Array.from(new Set(contacts.flatMap((c) => c.tags))).sort();
 
-  const filtered = demoContacts.filter((c) => {
+  const filtered = contacts.filter((c) => {
     const matchesSearch =
       !search ||
       `${c.firstName} ${c.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
@@ -26,8 +28,8 @@ export default function ContactsPage() {
     return matchesSearch && matchesTag;
   });
 
-  const selected = selectedContact ? demoContacts.find((c) => c.id === selectedContact) : null;
-  const selectedOpps = selected ? demoOpportunities.filter((o) => o.contactId === selected.id) : [];
+  const selected = selectedContact ? contacts.find((c) => c.id === selectedContact) : null;
+  const selectedOpps = selected ? opportunities.filter((o) => o.contactId === selected.id) : [];
 
   return (
     <div className="flex h-full">
@@ -40,10 +42,12 @@ export default function ContactsPage() {
               <Users className="h-5 w-5 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">{filtered.length} contacts</span>
             </div>
-            <Button variant="outline" size="sm">
-              <Upload className="h-4 w-4 mr-1" />
-              CSV Import
-            </Button>
+            <Link href="/imports?entity=contacts">
+              <Button variant="outline" size="sm">
+                <Upload className="h-4 w-4 mr-1" />
+                CSV Import
+              </Button>
+            </Link>
           </div>
 
           {/* Search + Tags */}
@@ -96,7 +100,7 @@ export default function ContactsPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {filtered.map((contact) => {
-                    const oppCount = demoOpportunities.filter((o) => o.contactId === contact.id).length;
+                    const oppCount = opportunities.filter((o) => o.contactId === contact.id).length;
                     return (
                       <tr
                         key={contact.id}

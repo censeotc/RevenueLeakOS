@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { usePilotData } from "@/components/providers/pilot-data-provider";
 import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { demoTemplates } from "@/lib/demo-data";
 import {
   Mail,
   MessageSquare,
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 export default function TemplatesPage() {
+  const { templates } = usePilotData();
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
@@ -26,10 +27,10 @@ export default function TemplatesPage() {
   const [editSubject, setEditSubject] = useState("");
 
   const filtered = typeFilter
-    ? demoTemplates.filter((t) => t.type === typeFilter)
-    : demoTemplates;
+    ? templates.filter((t) => t.type === typeFilter)
+    : templates;
 
-  const selected = selectedTemplate ? demoTemplates.find((t) => t.id === selectedTemplate) : null;
+  const selected = selectedTemplate ? templates.find((t) => t.id === selectedTemplate) : null;
 
   const sampleVariables: Record<string, string> = {
     firstName: "Robert",
@@ -53,7 +54,7 @@ export default function TemplatesPage() {
 
   const handleSelect = (id: string) => {
     setSelectedTemplate(id);
-    const t = demoTemplates.find((t) => t.id === id);
+    const t = templates.find((template) => template.id === id);
     if (t) {
       setEditBody(t.body);
       setEditSubject(t.subject || "");
@@ -69,15 +70,15 @@ export default function TemplatesPage() {
           <div className="flex items-center justify-between">
             <div className="flex gap-2">
               <Button variant={!typeFilter ? "default" : "outline"} size="sm" onClick={() => setTypeFilter(null)}>
-                All ({demoTemplates.length})
+                All ({templates.length})
               </Button>
               <Button variant={typeFilter === "sms" ? "default" : "outline"} size="sm" onClick={() => setTypeFilter("sms")}>
                 <MessageSquare className="h-3.5 w-3.5 mr-1" />
-                SMS ({demoTemplates.filter((t) => t.type === "sms").length})
+                SMS ({templates.filter((t) => t.type === "sms").length})
               </Button>
               <Button variant={typeFilter === "email" ? "default" : "outline"} size="sm" onClick={() => setTypeFilter("email")}>
                 <Mail className="h-3.5 w-3.5 mr-1" />
-                Email ({demoTemplates.filter((t) => t.type === "email").length})
+                Email ({templates.filter((t) => t.type === "email").length})
               </Button>
             </div>
             <Button size="sm">
