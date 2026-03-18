@@ -1,6 +1,5 @@
 import type {
   ActivityLog,
-  AppUser,
   Booking,
   CallDisposition,
   CallEvent,
@@ -12,7 +11,6 @@ import type {
   Estimate,
   IntegrationConnection,
   IntegrationProvider,
-  Location,
   MessageEvent,
   Opportunity,
   OpportunityNote,
