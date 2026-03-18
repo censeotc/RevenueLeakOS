@@ -2,7 +2,6 @@ import { buildDemoTenantData } from "@/lib/demo/build-demo-tenant";
 import type { DemoTenantData } from "@/lib/domain/types";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __revenueLeakStore: DemoTenantData | undefined;
 }
 

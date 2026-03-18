@@ -6,17 +6,30 @@ import type {
   DemoContact,
   DemoEstimate,
   DemoOpportunity,
+  DemoReportSnapshot,
   DemoTenantData,
   OpportunityType,
   OpportunityWithRelations,
 } from "@/lib/domain/types";
 
-function sortByNewest<T extends { createdAt?: string; startedAt?: string; sentAt?: string }>(
+function sortByNewest<T extends Record<string, unknown>>(
   items: T[],
 ) {
   return [...items].sort((a, b) => {
-    const left = new Date(a.createdAt ?? a.startedAt ?? a.sentAt ?? 0).getTime();
-    const right = new Date(b.createdAt ?? b.startedAt ?? b.sentAt ?? 0).getTime();
+    const left = new Date(
+      (a.createdAt as string | undefined) ??
+        (a.startedAt as string | undefined) ??
+        (a.sentAt as string | undefined) ??
+        (a.periodEnd as string | undefined) ??
+        0,
+    ).getTime();
+    const right = new Date(
+      (b.createdAt as string | undefined) ??
+        (b.startedAt as string | undefined) ??
+        (b.sentAt as string | undefined) ??
+        (b.periodEnd as string | undefined) ??
+        0,
+    ).getTime();
     return right - left;
   });
 }
@@ -113,7 +126,7 @@ export function getIntegrations() {
 }
 
 export function getReportSnapshots() {
-  return sortByNewest(getDemoStore().reportSnapshots);
+  return sortByNewest<DemoReportSnapshot>(getDemoStore().reportSnapshots);
 }
 
 export function getLatestReportSnapshot() {

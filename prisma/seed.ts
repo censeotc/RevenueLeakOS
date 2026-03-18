@@ -1,5 +1,5 @@
 import { hash } from "bcryptjs";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 import { buildDemoTenantData } from "@/lib/demo/build-demo-tenant";
 
@@ -65,8 +65,18 @@ async function main() {
   await prisma.estimate.createMany({ data: data.estimates });
   await prisma.messageEvent.createMany({ data: data.messageEvents });
   await prisma.booking.createMany({ data: data.bookings });
-  await prisma.activityLog.createMany({ data: data.activityLogs });
-  await prisma.integrationConnection.createMany({ data: data.integrationConnections });
+  await prisma.activityLog.createMany({
+    data: data.activityLogs.map((activity) => ({
+      ...activity,
+      metadata: activity.metadata as Prisma.InputJsonValue | undefined,
+    })),
+  });
+  await prisma.integrationConnection.createMany({
+    data: data.integrationConnections.map((integration) => ({
+      ...integration,
+      config: integration.config as Prisma.InputJsonValue | undefined,
+    })),
+  });
 
   for (const snapshot of data.reportSnapshots) {
     await prisma.reportSnapshot.create({

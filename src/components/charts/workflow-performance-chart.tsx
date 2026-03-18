@@ -21,7 +21,7 @@ export function WorkflowPerformanceChart({ data }: WorkflowPerformanceChartProps
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis dataKey="type" tickFormatter={(value) => value.replace(/_/g, " ")} />
           <YAxis tickFormatter={(value) => formatCurrency(value)} />
-          <Tooltip formatter={(value: number) => formatCurrency(value)} />
+          <Tooltip formatter={(value) => formatCurrency(Number(value ?? 0))} />
           <Bar dataKey="recoveredRevenue" fill="#0f172a" radius={[8, 8, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>

@@ -30,7 +30,7 @@ export function RecoveryTrendChart({ data }: RecoveryTrendChartProps) {
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis dataKey="date" />
           <YAxis tickFormatter={(value) => formatCurrency(value)} />
-          <Tooltip formatter={(value: number) => formatCurrency(value)} />
+          <Tooltip formatter={(value) => formatCurrency(Number(value ?? 0))} />
           <Legend />
           <Area type="monotone" dataKey="direct" stackId="1" stroke="#0284c7" fill="#7dd3fc" />
           <Area type="monotone" dataKey="influenced" stackId="1" stroke="#0f172a" fill="#94a3b8" />

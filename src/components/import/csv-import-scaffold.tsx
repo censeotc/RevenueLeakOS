@@ -32,7 +32,7 @@ const stepLabels = [
 ];
 
 export function CsvImportScaffold({ mode }: { mode: ImportMode }) {
-  const [csvText, setCsvText] = useState(sampleCsv[mode]);
+  const [csvText, setCsvText] = useState<string>(sampleCsv[mode]);
   const [importResult, setImportResult] = useState<{ success: number; errors: number } | null>(null);
 
   const headers = useMemo(() => detectHeaders(csvText), [csvText]);

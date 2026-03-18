@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 
 import { canAccessPath } from "@/lib/auth/permissions";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (!pathname.startsWith("/app") && !pathname.startsWith("/onboarding")) {

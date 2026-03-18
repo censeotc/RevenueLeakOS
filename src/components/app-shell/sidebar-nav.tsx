@@ -49,7 +49,7 @@ export function SidebarNav({ role }: { role: UserRole }) {
       </div>
       <nav className="space-y-1 p-4">
         {navItems.map((item) => {
-          const Icon = iconMap[item.title] ?? Workflow;
+          const Icon = iconMap[item.title as keyof typeof iconMap] ?? Workflow;
           const isActive = pathname.startsWith(item.href);
 
           return (
