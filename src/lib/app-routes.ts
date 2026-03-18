@@ -41,14 +41,15 @@ export function stripAppPrefix(pathname: string) {
   return stripped || INTERNAL_ROUTE_PATHS.dashboard;
 }
 
-const INTERNAL_PATH_SET = new Set<string>(Object.values(INTERNAL_ROUTE_PATHS));
+const INTERNAL_PATHS: string[] = Object.values(INTERNAL_ROUTE_PATHS) as string[];
 
 export function isInternalPath(pathname: string) {
-  if (INTERNAL_PATH_SET.has(pathname)) {
+  if (INTERNAL_PATHS.includes(pathname)) {
     return true;
   }
 
-  for (const internalPath of INTERNAL_PATH_SET) {
+  for (let i = 0; i < INTERNAL_PATHS.length; i += 1) {
+    const internalPath = INTERNAL_PATHS[i];
     if (pathname.startsWith(`${internalPath}/`)) {
       return true;
     }

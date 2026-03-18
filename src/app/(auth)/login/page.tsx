@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Zap } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/toast";
 import { demoUsers } from "@/services/seededDataService";
 import { useDemoSession } from "@/components/providers/demo-session-provider";
@@ -14,7 +14,6 @@ import { toAppRoute } from "@/lib/app-routes";
 export default function LoginPage() {
   const users = demoUsers;
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { setSession } = useDemoSession();
   const { pushToast } = useToast();
   const [selectedUserId, setSelectedUserId] = useState(users[0]?.id ?? "");
@@ -27,14 +26,17 @@ export default function LoginPage() {
     [selectedUserId, users]
   );
 
-  const nextPath = searchParams.get("next");
-  const redirectTarget = nextPath && nextPath.startsWith("/app/")
-    ? nextPath
-    : toAppRoute("/dashboard");
-
   const handleDemoLogin = async (userOverrideId?: string) => {
     setIsSubmitting(true);
     const activeUserId = userOverrideId ?? selectedUserId;
+    const nextPath =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("next")
+        : null;
+    const redirectTarget =
+      nextPath && nextPath.startsWith("/app/")
+        ? nextPath
+        : toAppRoute("/dashboard");
 
     try {
       const response = await fetch("/api/auth/demo-login", {
@@ -140,7 +142,13 @@ export default function LoginPage() {
                 onChange={(event) => setPassword(event.target.value)}
               />
             </div>
-            <Button className="w-full" onClick={handleDemoLogin} disabled={isSubmitting}>
+            <Button
+              className="w-full"
+              onClick={() => {
+                void handleDemoLogin();
+              }}
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Signing In..." : "Sign In"}
             </Button>
             {selectedUser ? (

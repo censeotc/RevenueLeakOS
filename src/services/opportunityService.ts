@@ -14,11 +14,11 @@ export interface OpportunityFilters {
   status?: OpportunityStatus;
 }
 
-export interface OpportunityWithContext extends OpportunityRecord {
+export type OpportunityWithContext = OpportunityRecord & {
   contactName: string;
   assigneeName: string | null;
   messageCount: number;
-}
+};
 
 export function listOpportunities(filters?: OpportunityFilters) {
   let rows = [...demoOpportunities];

@@ -4,7 +4,7 @@ import { INTERNAL_ROUTE_PATHS } from "@/lib/app-routes";
 export const DEMO_SESSION_COOKIE = "rlo_demo_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 14;
 
-export type DemoUserRole = (typeof demoUsers)[number]["role"];
+export type DemoUserRole = "owner" | "manager" | "csr" | "readonly";
 
 export interface DemoSessionPayload {
   user: {
@@ -71,7 +71,7 @@ export function buildSessionForUser(userId: string): DemoSessionPayload | null {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role,
+      role: user.role as DemoUserRole,
     },
     business: {
       id: demoBusiness.id,
