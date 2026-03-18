@@ -22,7 +22,7 @@ export function RecoveryTrendChart({ data }: { data: RecoveryTrendPoint[] }) {
           <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
           <YAxis stroke="#64748b" fontSize={12} />
           <Tooltip
-            formatter={(value: number) => currency(value)}
+            formatter={(value) => currency(Number(value ?? 0))}
             contentStyle={{ borderRadius: 12, borderColor: "#cbd5e1" }}
           />
           <Legend />

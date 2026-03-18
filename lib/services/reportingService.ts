@@ -76,9 +76,16 @@ export const reportingService = {
       take: 20,
       orderBy: { createdAt: "desc" },
     });
+    const extractMinutes = (metadata: unknown) => {
+      if (metadata && typeof metadata === "object" && "minutes" in metadata) {
+        const value = (metadata as { minutes?: unknown }).minutes;
+        return Number(value) || 18;
+      }
+      return 18;
+    };
     const avgResponseMinutes = responseSamples.length
       ? Math.round(
-          responseSamples.reduce((sum, row) => sum + (Number(row.metadata?.minutes) || 18), 0) /
+          responseSamples.reduce((sum, row) => sum + extractMinutes(row.metadata), 0) /
             responseSamples.length,
         )
       : 18;

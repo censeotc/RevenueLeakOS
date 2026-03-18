@@ -27,8 +27,10 @@ export function WorkflowPerformanceChart({
           <YAxis yAxisId="left" stroke="#64748b" fontSize={12} />
           <YAxis yAxisId="right" orientation="right" stroke="#64748b" fontSize={12} />
           <Tooltip
-            formatter={(value: number, name: string) =>
-              name === "recovered" ? currency(value) : value
+            formatter={(value, name) =>
+              name === "recovered"
+                ? currency(Number(value ?? 0))
+                : Number(value ?? 0).toLocaleString("en-US")
             }
             contentStyle={{ borderRadius: 12, borderColor: "#cbd5e1" }}
           />
