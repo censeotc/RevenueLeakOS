@@ -7,6 +7,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { getSessionUser } from "@/lib/session";
 import { getTemplates } from "@/lib/services/revenueleak";
+import { getBusinessProfile } from "@/lib/services/reportingService";
 import {
   archiveTemplateAction,
   createTemplateAction,
@@ -17,7 +18,11 @@ const variableOptions = ["{{firstName}}", "{{businessName}}", "{{serviceType}}",
 
 export default async function TemplatesPage() {
   const user = await getSessionUser();
-  const templates = await getTemplates(user.businessId);
+  const [templates, business] = await Promise.all([
+    getTemplates(user.businessId),
+    getBusinessProfile(user.businessId),
+  ]);
+  const businessName = business?.name ?? "Your Business";
 
   return (
     <div className="space-y-6">
@@ -57,7 +62,7 @@ export default async function TemplatesPage() {
             <div className="rounded-md border border-slate-200 p-3">
               <p className="text-sm font-medium text-slate-900">Preview</p>
               <p className="mt-1 text-sm text-slate-600">
-                Hi Mia, this is North Shore Heating & Plumbing. We can help with your Furnace
+                Hi Mia, this is {businessName}. We can help with your Furnace
                 Repair estimate EST-1204.
               </p>
             </div>

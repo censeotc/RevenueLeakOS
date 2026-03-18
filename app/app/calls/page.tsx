@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getSessionUser } from "@/lib/session";
-import { getCallEvents } from "@/lib/services/revenueleak";
+import { getCallEvents } from "@/lib/services/opportunityService";
 import { logBookingAction, simulateMissedCallAction, simulateReplyAction } from "@/app/actions";
 
 const tabs: Array<{ value: "all" | CallDisposition; label: string }> = [

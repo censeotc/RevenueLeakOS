@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSessionUser } from "@/lib/session";
 import { formatCurrency } from "@/lib/utils";
-import { getDashboardData } from "@/lib/services/revenueleak";
+import { getDashboardData } from "@/lib/services/reportingService";
 import {
   launchReactivationAction,
   simulateMissedCallAction,

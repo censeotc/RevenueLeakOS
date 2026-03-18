@@ -6,24 +6,26 @@ import bcrypt from "bcryptjs";
 import { getSessionUser } from "@/lib/session";
 import {
   addCampaignStep,
-  addOpportunityNote,
   archiveTemplate,
-  assignOpportunityOwner,
   createCampaign,
   createTemplate,
   createUser,
   duplicateTemplate,
   enrollEstimateInFollowup,
   launchReactivationCampaign,
-  logBooking,
   setEstimateOutcome,
   setIntegrationStatus,
-  simulateMissedCallWorkflow,
-  simulateReply,
   syncStaleEstimateOpportunities,
   updateBusinessSettings,
   updateCampaignStatus,
 } from "@/lib/services/revenueleak";
+import {
+  addOpportunityNote,
+  assignOpportunityOwner,
+  logBooking,
+  simulateMissedCallWorkflow,
+  simulateReply,
+} from "@/lib/services/opportunityService";
 
 const toNumber = (value: FormDataEntryValue | null, fallback = 0) => {
   const parsed = Number(value ?? fallback);
@@ -64,6 +66,7 @@ export async function simulateMissedCallAction(formData: FormData) {
 }
 
 export async function simulateReplyAction(formData: FormData) {
+  await getSessionUser();
   const opportunityId = String(formData.get("opportunityId") ?? "");
   const body = String(formData.get("body") ?? "Yes, I would like to book.");
   if (!opportunityId) return;
@@ -74,6 +77,7 @@ export async function simulateReplyAction(formData: FormData) {
 }
 
 export async function logBookingAction(formData: FormData) {
+  await getSessionUser();
   const opportunityId = String(formData.get("opportunityId") ?? "");
   const revenue = toNumber(formData.get("revenue"), 650);
   if (!opportunityId) return;
@@ -93,6 +97,7 @@ export async function syncStaleEstimateAction() {
 }
 
 export async function enrollEstimateAction(formData: FormData) {
+  await getSessionUser();
   const estimateId = String(formData.get("estimateId") ?? "");
   if (!estimateId) return;
   await enrollEstimateInFollowup(estimateId);
@@ -102,6 +107,7 @@ export async function enrollEstimateAction(formData: FormData) {
 }
 
 export async function setEstimateOutcomeAction(formData: FormData) {
+  await getSessionUser();
   const estimateId = String(formData.get("estimateId") ?? "");
   const status = String(formData.get("status") ?? "responded") as
     | "responded"
@@ -151,6 +157,7 @@ export async function createCampaignAction(formData: FormData) {
 }
 
 export async function updateCampaignStatusAction(formData: FormData) {
+  await getSessionUser();
   const campaignId = String(formData.get("campaignId") ?? "");
   const status = String(formData.get("status") ?? "draft");
   if (!campaignId) return;
@@ -159,6 +166,7 @@ export async function updateCampaignStatusAction(formData: FormData) {
 }
 
 export async function addCampaignStepAction(formData: FormData) {
+  await getSessionUser();
   const campaignId = String(formData.get("campaignId") ?? "");
   const channel = String(formData.get("channel") ?? "sms") as "sms" | "email";
   if (!campaignId) return;
@@ -185,6 +193,7 @@ export async function createTemplateAction(formData: FormData) {
 }
 
 export async function duplicateTemplateAction(formData: FormData) {
+  await getSessionUser();
   const templateId = String(formData.get("templateId") ?? "");
   if (!templateId) return;
   await duplicateTemplate(templateId);
@@ -192,6 +201,7 @@ export async function duplicateTemplateAction(formData: FormData) {
 }
 
 export async function archiveTemplateAction(formData: FormData) {
+  await getSessionUser();
   const templateId = String(formData.get("templateId") ?? "");
   if (!templateId) return;
   await archiveTemplate(templateId);

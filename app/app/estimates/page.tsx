@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { differenceInDays } from "date-fns";
 import { EstimateStatus } from "@prisma/client";
+import { CsvImportScaffoldCard } from "@/components/csv-import-scaffold-card";
 import { SectionHeader } from "@/components/section-header";
 import { SubmitButton } from "@/components/submit-button";
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +58,20 @@ export default async function EstimatesPage({
             </Button>
           </form>
         }
+      />
+
+      <CsvImportScaffoldCard
+        title="Estimate CSV import scaffold"
+        description="Estimate CSV mapping and ingest flow is scaffolded for pilot import connectors."
+        expectedColumns={[
+          "estimateNo",
+          "contactPhone",
+          "contactEmail",
+          "serviceType",
+          "amount",
+          "sentAt",
+          "status",
+        ]}
       />
 
       <div className="flex flex-wrap gap-2">

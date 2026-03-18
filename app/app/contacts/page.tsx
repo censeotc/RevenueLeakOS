@@ -1,8 +1,7 @@
 import { SectionHeader } from "@/components/section-header";
+import { CsvImportScaffoldCard } from "@/components/csv-import-scaffold-card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -25,22 +24,11 @@ export default async function ContactsPage() {
         description="Manage contacts, tags, notes, and linked opportunities."
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>CSV import scaffold</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form className="grid gap-2 md:grid-cols-[1fr_auto]">
-            <Input type="file" accept=".csv" disabled />
-            <Button type="button" variant="outline" disabled>
-              Import CSV (scaffold)
-            </Button>
-          </form>
-          <p className="mt-2 text-xs text-slate-500">
-            CSV parser wiring is intentionally scaffolded and ready for connector implementation.
-          </p>
-        </CardContent>
-      </Card>
+      <CsvImportScaffoldCard
+        title="CSV import scaffold"
+        description="Contacts CSV parser wiring is scaffolded and ready for connector implementation."
+        expectedColumns={["firstName", "lastName", "phone", "email", "tags", "notes"]}
+      />
 
       <Card>
         <CardHeader>

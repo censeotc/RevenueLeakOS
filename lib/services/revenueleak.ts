@@ -14,7 +14,7 @@ import {
 import { addMonths, subMonths } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { DEFAULTS } from "@/lib/constants";
-import { normalizePhone, sendMockSms } from "@/lib/services/twilio-mock";
+import { normalizePhone, twilioService } from "@/lib/services/twilioService";
 import { ReactivationSegmentKey } from "@/lib/types";
 
 const money = (value: Prisma.Decimal | number | string) =>
@@ -385,8 +385,8 @@ export async function addOpportunityNote(
   return note;
 }
 
-function missedCallTemplate(firstName: string) {
-  return `Hi ${firstName}, this is North Shore Heating & Plumbing. We noticed we missed your call—would you like to book service?`;
+function missedCallTemplate(firstName: string, businessName: string) {
+  return `Hi ${firstName}, this is ${businessName}. We noticed we missed your call—would you like to book service?`;
 }
 
 function mapOpportunityTypeToBookingSource(type: OpportunityType): BookingSource {
@@ -403,7 +403,7 @@ export async function simulateMissedCallWorkflow(args: {
 }) {
   const business = await prisma.business.findUniqueOrThrow({
     where: { id: args.businessId },
-    select: { id: true, duplicateMissedCallSuppressionHours: true },
+    select: { id: true, name: true, duplicateMissedCallSuppressionHours: true },
   });
 
   const normalized = normalizePhone(args.fromNumber);
@@ -477,8 +477,8 @@ export async function simulateMissedCallWorkflow(args: {
   const smsBody = template?.content
     ? template.content
         .replace("{{firstName}}", contact.firstName)
-        .replace("{{businessName}}", "North Shore Heating & Plumbing")
-    : missedCallTemplate(contact.firstName);
+        .replace("{{businessName}}", business.name)
+    : missedCallTemplate(contact.firstName, business.name);
 
   const outbound = await prisma.messageEvent.create({
     data: {
@@ -493,7 +493,7 @@ export async function simulateMissedCallWorkflow(args: {
     },
   });
 
-  const twilioResult = await sendMockSms({
+  const twilioResult = await twilioService.sendSms({
     to: normalized,
     from: normalizePhone(args.toNumber),
     body: smsBody,
@@ -859,7 +859,13 @@ export async function launchReactivationCampaign(args: {
   userId?: string;
   segment: ReactivationSegmentKey;
 }) {
-  const contacts = await getReactivationContacts(args.businessId, args.segment);
+  const [contacts, business] = await Promise.all([
+    getReactivationContacts(args.businessId, args.segment),
+    prisma.business.findUniqueOrThrow({
+      where: { id: args.businessId },
+      select: { name: true },
+    }),
+  ]);
   if (contacts.length === 0) {
     return { campaignId: null, created: 0 };
   }
@@ -908,7 +914,7 @@ export async function launchReactivationCampaign(args: {
       },
     });
 
-    const body = `Hi ${contact.firstName}, this is North Shore Heating & Plumbing. We'd love to help with your next service.`;
+    const body = `Hi ${contact.firstName}, this is ${business.name}. We'd love to help with your next service.`;
     await prisma.messageEvent.create({
       data: {
         businessId: args.businessId,

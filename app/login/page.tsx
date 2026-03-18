@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { LoginForm } from "@/components/login-form";
@@ -17,6 +18,13 @@ export default async function LoginPage() {
           <p className="text-sm text-slate-600">Internal revenue recovery app</p>
         </div>
         <LoginForm />
+        <p className="mt-4 text-center text-xs text-slate-500">
+          Prefer one-click access?{" "}
+          <Link href="/demo-login" className="font-medium text-slate-700 hover:text-slate-900">
+            Use demo login
+          </Link>
+          .
+        </p>
       </div>
     </main>
   );

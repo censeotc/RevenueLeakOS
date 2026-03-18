@@ -18,6 +18,7 @@ export const DEFAULTS = {
 
 export const NAV_ITEMS = [
   { href: "/app/dashboard", label: "Dashboard" },
+  { href: "/app/demo-walkthrough", label: "Demo Walkthrough" },
   { href: "/app/opportunities", label: "Opportunities" },
   { href: "/app/calls", label: "Calls" },
   { href: "/app/estimates", label: "Estimates" },

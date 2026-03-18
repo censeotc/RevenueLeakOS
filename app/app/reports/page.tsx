@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getSessionUser } from "@/lib/session";
-import { getReportsData } from "@/lib/services/revenueleak";
+import { getReportsData } from "@/lib/services/reportingService";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 
 export default async function ReportsPage() {

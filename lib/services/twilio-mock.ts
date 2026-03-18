@@ -1,42 +1,18 @@
-export type MockTwilioMessageInput = {
-  to: string;
-  from: string;
-  body: string;
-};
+import {
+  normalizePhone,
+  twilioService,
+  type TwilioMessageInput,
+  type TwilioMessageResult,
+} from "@/lib/services/twilioService";
 
-export type MockTwilioMessageResult = {
-  sid: string;
-  status: "queued" | "sent";
-  to: string;
-  from: string;
-  body: string;
-  createdAt: Date;
-};
+export type MockTwilioMessageInput = TwilioMessageInput;
+export type MockTwilioMessageResult = TwilioMessageResult;
 
-// Mockable transport layer. Replace this implementation with real Twilio wiring later.
+// Backward-compatible shim while callers migrate to twilioService directly.
 export async function sendMockSms(
   input: MockTwilioMessageInput,
 ): Promise<MockTwilioMessageResult> {
-  const sid = `SM${Math.random().toString(16).slice(2, 14).toUpperCase()}`;
-  const createdAt = new Date();
-
-  return {
-    sid,
-    status: "sent",
-    to: input.to,
-    from: input.from,
-    body: input.body,
-    createdAt,
-  };
+  return twilioService.sendSms(input);
 }
 
-export function normalizePhone(value: string) {
-  const digits = value.replace(/[^\d]/g, "");
-  if (digits.length === 10) {
-    return `+1${digits}`;
-  }
-  if (digits.startsWith("1") && digits.length === 11) {
-    return `+${digits}`;
-  }
-  return value.startsWith("+") ? value : `+${digits}`;
-}
+export { normalizePhone };

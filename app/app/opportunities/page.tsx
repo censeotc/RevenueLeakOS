@@ -20,7 +20,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { getSessionUser } from "@/lib/session";
 import { formatCurrency } from "@/lib/utils";
-import { getOpportunityById, getOpportunityList, getUsersByBusiness } from "@/lib/services/revenueleak";
+import {
+  getOpportunityById,
+  getOpportunityList,
+  getUsersByBusiness,
+} from "@/lib/services/opportunityService";
 import { addOpportunityNoteAction, assignOpportunityOwnerAction } from "@/app/actions";
 
 type SearchParams = {
