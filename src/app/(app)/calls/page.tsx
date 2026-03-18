@@ -5,11 +5,29 @@ import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { demoCallEvents, demoMessages, getContactById, demoOpportunities } from "@/lib/demo-data";
+import { EmptyState } from "@/components/ui/empty-state";
+import {
+  demoCallEvents,
+  demoMessages,
+  getContactById,
+  demoOpportunities,
+} from "@/services/seededDataService";
 import { timeAgo } from "@/lib/utils";
 import { Phone, PhoneIncoming, PhoneOutgoing, MessageSquare, CalendarCheck } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 type CallTab = "all" | "missed" | "after_hours" | "abandoned" | "responded" | "booked" | "lost";
+type LocalMessage = {
+  id: string;
+  channel: "sms";
+  direction: "inbound" | "outbound";
+  toNumber: string | null;
+  fromNumber: string | null;
+  body: string;
+  contactId: string | null;
+  opportunityId: string | null;
+  sentAt: Date;
+};
 
 const tabs: { value: CallTab; label: string }[] = [
   { value: "all", label: "All" },
@@ -22,8 +40,12 @@ const tabs: { value: CallTab; label: string }[] = [
 ];
 
 export default function CallsPage() {
+  const { pushToast } = useToast();
   const [tab, setTab] = useState<CallTab>("all");
   const [selectedCall, setSelectedCall] = useState<string | null>(null);
+  const [localMessages, setLocalMessages] = useState<Record<string, LocalMessage[]>>({});
+  const [isSendingSms, setIsSendingSms] = useState(false);
+  const [isCallingBack, setIsCallingBack] = useState(false);
 
   const filtered = tab === "all"
     ? demoCallEvents
@@ -34,9 +56,106 @@ export default function CallsPage() {
     ? demoOpportunities.find((o) => o.id === selected.opportunityId)
     : null;
   const selectedContact = selected?.contactId ? getContactById(selected.contactId) : null;
-  const smsThread = selected?.opportunityId
+  const baseThread = selected?.opportunityId
     ? demoMessages.filter((m) => m.opportunityId === selected.opportunityId)
     : [];
+  const appendedThread = selected?.opportunityId ? localMessages[selected.opportunityId] || [] : [];
+  const smsThread = [...baseThread, ...appendedThread];
+
+  const handleSendSms = async () => {
+    if (!selected || !selectedOpp) {
+      return;
+    }
+
+    setIsSendingSms(true);
+    try {
+      const messageText = `Hi, this is ${selected.calledNumber}. Sorry we missed your call—how can we help today?`;
+      const response = await fetch("/api/calls/send-sms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: selected.callerNumber,
+          from: selected.calledNumber,
+          message: messageText,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("SMS send failed");
+      }
+
+      const newMessage = {
+        id: `local_msg_${Date.now()}`,
+        channel: "sms" as const,
+        direction: "outbound" as const,
+        toNumber: selected.callerNumber,
+        fromNumber: selected.calledNumber,
+        body: messageText,
+        contactId: selected.contactId ?? null,
+        opportunityId: selectedOpp.id,
+        sentAt: new Date(),
+      };
+
+      setLocalMessages((current) => ({
+        ...current,
+        [selectedOpp.id]: [...(current[selectedOpp.id] || []), newMessage],
+      }));
+
+      pushToast({
+        title: "SMS sent",
+        description: `Message delivered to ${selected.callerNumber}.`,
+        variant: "success",
+      });
+    } catch {
+      pushToast({
+        title: "SMS failed",
+        description: "Unable to send message via Twilio mock service.",
+        variant: "error",
+      });
+    } finally {
+      setIsSendingSms(false);
+    }
+  };
+
+  const handleCallBack = async () => {
+    if (!selected) {
+      return;
+    }
+
+    setIsCallingBack(true);
+    try {
+      const response = await fetch("/api/calls/call-back", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: selected.callerNumber,
+          from: selected.calledNumber,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Call simulation failed");
+      }
+
+      pushToast({
+        title: "Call connected",
+        description: `Outbound callback placed to ${selected.callerNumber}.`,
+        variant: "success",
+      });
+    } catch {
+      pushToast({
+        title: "Callback failed",
+        description: "Unable to place outbound call in mock mode.",
+        variant: "error",
+      });
+    } finally {
+      setIsCallingBack(false);
+    }
+  };
 
   return (
     <div className="flex h-full">
@@ -181,6 +300,17 @@ export default function CallsPage() {
                       </tr>
                     );
                   })}
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td className="px-4 py-8" colSpan={7}>
+                        <EmptyState
+                          title="No calls in this view"
+                          description="Try another filter or simulate a missed call workflow."
+                          className="border-0 bg-transparent p-0 py-2"
+                        />
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </CardContent>
@@ -252,10 +382,27 @@ export default function CallsPage() {
                 </div>
               </div>
             )}
+            {smsThread.length === 0 && (
+              <EmptyState
+                title="No SMS thread yet"
+                description="Send an outreach message to start a conversation with this caller."
+                className="py-6"
+              />
+            )}
 
             <div className="flex gap-2">
-              <Button size="sm" className="flex-1">Send SMS</Button>
-              <Button size="sm" variant="outline" className="flex-1">Call Back</Button>
+              <Button size="sm" className="flex-1" onClick={handleSendSms} disabled={isSendingSms}>
+                {isSendingSms ? "Sending..." : "Send SMS"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1"
+                onClick={handleCallBack}
+                disabled={isCallingBack}
+              >
+                {isCallingBack ? "Calling..." : "Call Back"}
+              </Button>
             </div>
           </div>
         </div>

@@ -2,42 +2,44 @@
 
 import { useState } from "react";
 import { TopBar } from "@/components/layout/top-bar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
-  demoOpportunities,
   demoMessages,
   getContactById,
-  getUserById,
   demoUsers,
-} from "@/lib/demo-data";
+} from "@/services/seededDataService";
 import { formatCurrency, timeAgo, getOpportunityTypeLabel, getOpportunityTypeColor } from "@/lib/utils";
 import { Target, X, MessageSquare, User, Plus } from "lucide-react";
+import { listOpportunitiesWithContext } from "@/services/opportunityService";
+import { useToast } from "@/components/ui/toast";
 
 type FilterType = "all" | "missed_call" | "estimate_rescue" | "reactivation";
 
 export default function OpportunitiesPage() {
+  const { pushToast } = useToast();
   const [filter, setFilter] = useState<FilterType>("all");
   const [selectedOpp, setSelectedOpp] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
   const [localNotes, setLocalNotes] = useState<Record<string, Array<{ content: string; author: string; createdAt: Date }>>>({});
+  const opportunities = listOpportunitiesWithContext();
 
   const filtered =
     filter === "all"
-      ? demoOpportunities
-      : demoOpportunities.filter((o) => o.type === filter);
+      ? opportunities
+      : opportunities.filter((o) => o.type === filter);
 
-  const selected = selectedOpp ? demoOpportunities.find((o) => o.id === selectedOpp) : null;
+  const selected = selectedOpp ? opportunities.find((o) => o.id === selectedOpp) : null;
   const selectedContact = selected ? getContactById(selected.contactId) : null;
-  const selectedAssignee = selected?.assignedToId ? getUserById(selected.assignedToId) : null;
   const selectedMessages = selected ? demoMessages.filter((m) => m.opportunityId === selected.id) : [];
 
   const filterCounts = {
-    all: demoOpportunities.length,
-    missed_call: demoOpportunities.filter((o) => o.type === "missed_call").length,
-    estimate_rescue: demoOpportunities.filter((o) => o.type === "estimate_rescue").length,
-    reactivation: demoOpportunities.filter((o) => o.type === "reactivation").length,
+    all: opportunities.length,
+    missed_call: opportunities.filter((o) => o.type === "missed_call").length,
+    estimate_rescue: opportunities.filter((o) => o.type === "estimate_rescue").length,
+    reactivation: opportunities.filter((o) => o.type === "reactivation").length,
   };
 
   const addNote = () => {
@@ -50,6 +52,11 @@ export default function OpportunitiesPage() {
       ],
     }));
     setNoteText("");
+    pushToast({
+      title: "Note added",
+      description: "Opportunity note saved in demo session.",
+      variant: "success",
+    });
   };
 
   return (
@@ -89,8 +96,6 @@ export default function OpportunitiesPage() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {filtered.map((opp) => {
-                      const contact = getContactById(opp.contactId);
-                      const assignee = opp.assignedToId ? getUserById(opp.assignedToId) : null;
                       return (
                         <tr
                           key={opp.id}
@@ -109,19 +114,30 @@ export default function OpportunitiesPage() {
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            {contact ? `${contact.firstName} ${contact.lastName}` : "-"}
+                            {opp.contactName}
                           </td>
                           <td className="px-4 py-3 font-medium">{formatCurrency(opp.estimatedValue)}</td>
                           <td className="px-4 py-3">
                             <StatusBadge status={opp.status} />
                           </td>
                           <td className="px-4 py-3 text-muted-foreground">
-                            {assignee?.name || "Unassigned"}
+                            {opp.assigneeName || "Unassigned"}
                           </td>
                           <td className="px-4 py-3 text-muted-foreground">{timeAgo(opp.createdAt)}</td>
                         </tr>
                       );
                     })}
+                    {filtered.length === 0 && (
+                      <tr>
+                        <td className="px-4 py-8" colSpan={7}>
+                          <EmptyState
+                            title="No opportunities found"
+                            description="Try a different filter to view available opportunities."
+                            className="border-0 bg-transparent p-0"
+                          />
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -194,10 +210,13 @@ export default function OpportunitiesPage() {
             {/* Assignment */}
             <div>
               <p className="text-xs text-muted-foreground mb-2">Assigned To</p>
-              <select className="w-full rounded-lg border border-input px-3 py-2 text-sm bg-background">
+              <select
+                className="w-full rounded-lg border border-input px-3 py-2 text-sm bg-background"
+                defaultValue={selected.assignedToId ?? ""}
+              >
                 <option value="">Unassigned</option>
                 {demoUsers.map((u) => (
-                  <option key={u.id} value={u.id} selected={u.id === selected.assignedToId}>
+                  <option key={u.id} value={u.id}>
                     {u.name}
                   </option>
                 ))}
@@ -253,12 +272,46 @@ export default function OpportunitiesPage() {
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
+              {(localNotes[selected.id] || []).length === 0 && (
+                <div className="mt-2">
+                  <EmptyState
+                    title="No notes yet"
+                    description="Capture follow-up context for teammates."
+                    className="py-5"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Actions */}
             <div className="flex gap-2">
-              <Button size="sm" className="flex-1">Mark Contacted</Button>
-              <Button size="sm" variant="outline" className="flex-1">Log Booking</Button>
+              <Button
+                size="sm"
+                className="flex-1"
+                onClick={() =>
+                  pushToast({
+                    title: "Status updated",
+                    description: "Opportunity marked as contacted in demo mode.",
+                    variant: "success",
+                  })
+                }
+              >
+                Mark Contacted
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1"
+                onClick={() =>
+                  pushToast({
+                    title: "Booking scaffold",
+                    description: "Booking logging API route is available for next wiring step.",
+                    variant: "info",
+                  })
+                }
+              >
+                Log Booking
+              </Button>
             </div>
           </div>
         </div>

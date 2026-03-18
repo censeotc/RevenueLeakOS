@@ -5,7 +5,8 @@ import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { demoContacts, demoOpportunities } from "@/lib/demo-data";
+import { EmptyState } from "@/components/ui/empty-state";
+import { demoContacts, demoOpportunities } from "@/services/seededDataService";
 import { formatCurrency, daysSince } from "@/lib/utils";
 import {
   Users,
@@ -13,8 +14,8 @@ import {
   CreditCard,
   RefreshCw,
   Megaphone,
-  ArrowRight,
 } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 interface Segment {
   id: string;
@@ -27,8 +28,10 @@ interface Segment {
 }
 
 export default function ReactivationPage() {
+  const { pushToast } = useToast();
   const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
   const [launchedCampaigns, setLaunchedCampaigns] = useState<Set<string>>(new Set());
+  const [launchingSegment, setLaunchingSegment] = useState<string | null>(null);
 
   const noService12Months = demoContacts.filter(
     (c) => c.lastServiceDate && daysSince(c.lastServiceDate) > 365
@@ -86,6 +89,45 @@ export default function ReactivationPage() {
 
   const reactivationOpps = demoOpportunities.filter((o) => o.type === "reactivation");
 
+  const handleLaunch = async (segment: Segment) => {
+    setLaunchingSegment(segment.id);
+    try {
+      const response = await fetch("/api/workflows/reactivation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contactIds: segment.contacts.map((contact) => contact.id),
+          segmentName: segment.name,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Launch failed");
+      }
+
+      setLaunchedCampaigns((prev) => {
+        const next = new Set(prev);
+        next.add(segment.id);
+        return next;
+      });
+      pushToast({
+        title: "Reactivation launched",
+        description: `${segment.contacts.length} contacts queued in ${segment.name}.`,
+        variant: "success",
+      });
+    } catch {
+      pushToast({
+        title: "Launch failed",
+        description: "Could not launch this reactivation segment.",
+        variant: "error",
+      });
+    } finally {
+      setLaunchingSegment(null);
+    }
+  };
+
   return (
     <div>
       <TopBar title="Reactivation" />
@@ -121,15 +163,13 @@ export default function ReactivationPage() {
                     variant={launchedCampaigns.has(seg.id) ? "secondary" : "default"}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setLaunchedCampaigns((prev) => {
-                        const next = new Set(prev);
-                        next.add(seg.id);
-                        return next;
-                      });
+                      void handleLaunch(seg);
                     }}
-                    disabled={launchedCampaigns.has(seg.id)}
+                    disabled={launchedCampaigns.has(seg.id) || launchingSegment === seg.id}
                   >
-                    {launchedCampaigns.has(seg.id) ? (
+                    {launchingSegment === seg.id ? (
+                      "Launching..."
+                    ) : launchedCampaigns.has(seg.id) ? (
                       "Launched"
                     ) : (
                       <>
@@ -184,6 +224,17 @@ export default function ReactivationPage() {
                       </td>
                     </tr>
                   ))}
+                  {activeSegment.contacts.length === 0 && (
+                    <tr>
+                      <td className="px-4 py-8" colSpan={6}>
+                        <EmptyState
+                          title="No contacts in this segment"
+                          description="Adjust filters or import more contacts to build this segment."
+                          className="border-0 bg-transparent p-0"
+                        />
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </CardContent>
@@ -219,6 +270,17 @@ export default function ReactivationPage() {
                     </td>
                   </tr>
                 ))}
+                {reactivationOpps.length === 0 && (
+                  <tr>
+                    <td className="px-4 py-8" colSpan={4}>
+                      <EmptyState
+                        title="No reactivation opportunities"
+                        description="Launch a segment to create your first reactivation workflow."
+                        className="border-0 bg-transparent p-0"
+                      />
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </CardContent>

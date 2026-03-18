@@ -5,7 +5,8 @@ import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { demoIntegrations } from "@/lib/demo-data";
+import { EmptyState } from "@/components/ui/empty-state";
+import { demoIntegrations } from "@/services/seededDataService";
 import { timeAgo } from "@/lib/utils";
 import {
   Phone,
@@ -20,6 +21,7 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 const providerIcons: Record<string, React.ReactNode> = {
   twilio: <Phone className="h-6 w-6" />,
@@ -40,11 +42,19 @@ const statusIcons: Record<string, React.ReactNode> = {
 };
 
 export default function IntegrationsPage() {
+  const { pushToast } = useToast();
   const [testing, setTesting] = useState<string | null>(null);
 
   const handleTest = (provider: string) => {
     setTesting(provider);
-    setTimeout(() => setTesting(null), 2000);
+    setTimeout(() => {
+      setTesting(null);
+      pushToast({
+        title: "Integration test passed",
+        description: `${provider} responded successfully in demo mode.`,
+        variant: "success",
+      });
+    }, 1200);
   };
 
   return (
@@ -121,6 +131,14 @@ export default function IntegrationsPage() {
               </CardContent>
             </Card>
           ))}
+          {demoIntegrations.length === 0 && (
+            <div className="md:col-span-2 lg:col-span-3">
+              <EmptyState
+                title="No integrations configured"
+                description="Connect your communication and scheduling providers to continue."
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

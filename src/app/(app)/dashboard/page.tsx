@@ -4,6 +4,7 @@ import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   dashboardSummary,
   demoAlerts,
@@ -11,7 +12,7 @@ import {
   demoOpportunities,
   getContactById,
   getUserById,
-} from "@/lib/demo-data";
+} from "@/services/seededDataService";
 import { formatCurrency, formatMinutes, timeAgo, getOpportunityTypeLabel } from "@/lib/utils";
 import {
   DollarSign,
@@ -117,21 +118,31 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-border">
-                  {demoActivityLogs.slice(0, 8).map((log) => (
-                    <div key={log.id} className="flex items-start gap-3 px-4 py-3">
-                      <div className="mt-0.5 rounded-lg bg-muted p-1.5 text-muted-foreground">
-                        {getActivityIcon(log.action)}
+                  {demoActivityLogs.slice(0, 8).length > 0 ? (
+                    demoActivityLogs.slice(0, 8).map((log) => (
+                      <div key={log.id} className="flex items-start gap-3 px-4 py-3">
+                        <div className="mt-0.5 rounded-lg bg-muted p-1.5 text-muted-foreground">
+                          {getActivityIcon(log.action)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground">
+                            {getActivityDescription(log)}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {timeAgo(log.createdAt)}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground">
-                          {getActivityDescription(log)}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {timeAgo(log.createdAt)}
-                        </p>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="p-4">
+                      <EmptyState
+                        title="No recent activity"
+                        description="Activity logs will appear here as workflows run."
+                        className="border-0 bg-transparent p-0"
+                      />
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -153,22 +164,32 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-border">
-                  {demoAlerts.map((alert) => (
-                    <Link
-                      key={alert.id}
-                      href={alert.linkTo || "#"}
-                      className="flex items-start gap-3 px-4 py-3 hover:bg-accent/50 transition-colors"
-                    >
-                      <div className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${alert.read ? "bg-gray-300" : "bg-destructive"}`} />
-                      <div>
-                        <p className={`text-sm ${alert.read ? "text-muted-foreground" : "text-foreground font-medium"}`}>
-                          {alert.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{alert.description}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{timeAgo(alert.timestamp)}</p>
-                      </div>
-                    </Link>
-                  ))}
+                  {demoAlerts.length > 0 ? (
+                    demoAlerts.map((alert) => (
+                      <Link
+                        key={alert.id}
+                        href={alert.linkTo || "#"}
+                        className="flex items-start gap-3 px-4 py-3 hover:bg-accent/50 transition-colors"
+                      >
+                        <div className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${alert.read ? "bg-gray-300" : "bg-destructive"}`} />
+                        <div>
+                          <p className={`text-sm ${alert.read ? "text-muted-foreground" : "text-foreground font-medium"}`}>
+                            {alert.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{alert.description}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{timeAgo(alert.timestamp)}</p>
+                        </div>
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="p-4">
+                      <EmptyState
+                        title="No alerts"
+                        description="You are caught up. New alerts will appear here."
+                        className="border-0 bg-transparent p-0"
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -265,6 +286,17 @@ export default function DashboardPage() {
                       </tr>
                     );
                   })}
+                  {activeOpportunities.length === 0 && (
+                    <tr>
+                      <td className="px-4 py-8" colSpan={7}>
+                        <EmptyState
+                          title="No active opportunities"
+                          description="New opportunities will appear as workflows are triggered."
+                          className="border-0 bg-transparent p-0"
+                        />
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

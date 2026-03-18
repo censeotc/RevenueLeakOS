@@ -2,16 +2,22 @@
 
 import { useState } from "react";
 import { TopBar } from "@/components/layout/top-bar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { demoEstimates, getContactById } from "@/lib/demo-data";
+import { EmptyState } from "@/components/ui/empty-state";
+import { demoEstimates, getContactById } from "@/services/seededDataService";
 import { formatCurrency, daysSince } from "@/lib/utils";
 import { FileText, Clock, AlertTriangle, CheckCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/toast";
+import { toAppRoute } from "@/lib/app-routes";
 
 type StatusFilter = "all" | "stale" | "sent" | "viewed" | "follow_up" | "booked" | "expired";
 
 export default function EstimatesPage() {
+  const router = useRouter();
+  const { pushToast } = useToast();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [enrolledIds, setEnrolledIds] = useState<Set<string>>(new Set());
 
@@ -31,12 +37,33 @@ export default function EstimatesPage() {
       else next.add(id);
       return next;
     });
+    pushToast({
+      title: "Follow-up updated",
+      description: "Estimate follow-up enrollment status changed.",
+      variant: "success",
+    });
   };
 
   return (
     <div>
       <TopBar title="Estimates" />
       <div className="p-6 space-y-6">
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              pushToast({
+                title: "CSV scaffold opened",
+                description: "Upload an estimates file in the Imports page.",
+                variant: "info",
+              });
+              router.push(`${toAppRoute("/imports")}?entity=estimates`);
+            }}
+          >
+            Import Estimates CSV
+          </Button>
+        </div>
         {/* Summary */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
@@ -163,6 +190,17 @@ export default function EstimatesPage() {
                     </tr>
                   );
                 })}
+                {filtered.length === 0 && (
+                  <tr>
+                    <td className="px-4 py-8" colSpan={8}>
+                      <EmptyState
+                        title="No estimates in this filter"
+                        description="Switch status filters or import estimates CSV data."
+                        className="border-0 bg-transparent p-0"
+                      />
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </CardContent>

@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { TopBar } from "@/components/layout/top-bar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ui/badge";
-import { demoTemplates } from "@/lib/demo-data";
+import { EmptyState } from "@/components/ui/empty-state";
+import { demoTemplates } from "@/services/seededDataService";
 import {
   Mail,
   MessageSquare,
@@ -17,8 +17,10 @@ import {
   X,
   Variable,
 } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 export default function TemplatesPage() {
+  const { pushToast } = useToast();
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
@@ -80,7 +82,16 @@ export default function TemplatesPage() {
                 Email ({demoTemplates.filter((t) => t.type === "email").length})
               </Button>
             </div>
-            <Button size="sm">
+            <Button
+              size="sm"
+              onClick={() =>
+                pushToast({
+                  title: "Template scaffold ready",
+                  description: "New template creation will be enabled in a follow-up write flow.",
+                  variant: "info",
+                })
+              }
+            >
               <Plus className="h-4 w-4 mr-1" />
               New Template
             </Button>
@@ -133,6 +144,12 @@ export default function TemplatesPage() {
                 </CardContent>
               </Card>
             ))}
+            {filtered.length === 0 && (
+              <EmptyState
+                title="No templates in this filter"
+                description="Switch channel filters or create a new draft template."
+              />
+            )}
           </div>
         </div>
       </div>
@@ -232,7 +249,18 @@ export default function TemplatesPage() {
             )}
 
             <div className="flex gap-2">
-              <Button className="flex-1">Save Template</Button>
+              <Button
+                className="flex-1"
+                onClick={() =>
+                  pushToast({
+                    title: "Template saved",
+                    description: "Template updates were applied in demo mode.",
+                    variant: "success",
+                  })
+                }
+              >
+                Save Template
+              </Button>
               <Button variant="outline" size="icon" title="Duplicate">
                 <Copy className="h-4 w-4" />
               </Button>

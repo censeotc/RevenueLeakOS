@@ -5,7 +5,8 @@ import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { demoCampaigns, demoTemplates } from "@/lib/demo-data";
+import { EmptyState } from "@/components/ui/empty-state";
+import { demoCampaigns, demoTemplates } from "@/services/seededDataService";
 import { getOpportunityTypeLabel } from "@/lib/utils";
 import {
   Megaphone,
@@ -19,9 +20,8 @@ import {
   Phone,
   Clock,
   X,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 const stepTypeIcons: Record<string, React.ReactNode> = {
   sms: <MessageSquare className="h-4 w-4" />,
@@ -31,6 +31,7 @@ const stepTypeIcons: Record<string, React.ReactNode> = {
 };
 
 export default function CampaignsPage() {
+  const { pushToast } = useToast();
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -109,7 +110,19 @@ export default function CampaignsPage() {
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" size="sm" onClick={() => setShowCreate(false)}>Cancel</Button>
-                  <Button size="sm">Create Campaign</Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      pushToast({
+                        title: "Campaign scaffold ready",
+                        description: "Campaign creation payload is staged for full write flow.",
+                        variant: "info",
+                      });
+                      setShowCreate(false);
+                    }}
+                  >
+                    Create Campaign
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -178,6 +191,12 @@ export default function CampaignsPage() {
                 </CardContent>
               </Card>
             ))}
+            {filtered.length === 0 && (
+              <EmptyState
+                title="No campaigns in this filter"
+                description="Try another status filter or create a new campaign draft."
+              />
+            )}
           </div>
         </div>
       </div>
@@ -251,7 +270,18 @@ export default function CampaignsPage() {
                   );
                 })}
               </div>
-              <Button variant="outline" size="sm" className="w-full mt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full mt-3"
+                onClick={() =>
+                  pushToast({
+                    title: "Step editor scaffold",
+                    description: "Step creation wiring is staged for pilot iteration.",
+                    variant: "info",
+                  })
+                }
+              >
                 <Plus className="h-4 w-4 mr-1" /> Add Step
               </Button>
             </div>

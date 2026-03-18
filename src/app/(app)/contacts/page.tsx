@@ -2,14 +2,20 @@
 
 import { useState } from "react";
 import { TopBar } from "@/components/layout/top-bar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { demoContacts, demoOpportunities } from "@/lib/demo-data";
-import { formatCurrency, daysSince, timeAgo } from "@/lib/utils";
+import { EmptyState } from "@/components/ui/empty-state";
+import { demoContacts, demoOpportunities } from "@/services/seededDataService";
+import { formatCurrency, daysSince } from "@/lib/utils";
 import { Users, Upload, Search, X, Target } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toAppRoute } from "@/lib/app-routes";
+import { useToast } from "@/components/ui/toast";
 
 export default function ContactsPage() {
+  const router = useRouter();
+  const { pushToast } = useToast();
   const [search, setSearch] = useState("");
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
@@ -40,7 +46,18 @@ export default function ContactsPage() {
               <Users className="h-5 w-5 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">{filtered.length} contacts</span>
             </div>
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                pushToast({
+                  title: "CSV scaffold opened",
+                  description: "Upload a contacts file in the Imports page.",
+                  variant: "info",
+                });
+                router.push(`${toAppRoute("/imports")}?entity=contacts`);
+              }}
+            >
               <Upload className="h-4 w-4 mr-1" />
               CSV Import
             </Button>
@@ -127,6 +144,17 @@ export default function ContactsPage() {
                       </tr>
                     );
                   })}
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td className="px-4 py-8" colSpan={7}>
+                        <EmptyState
+                          title="No contacts found"
+                          description="Try clearing filters or import contacts via CSV."
+                          className="border-0 bg-transparent p-0"
+                        />
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </CardContent>
@@ -181,25 +209,33 @@ export default function ContactsPage() {
               </div>
             </div>
 
-            {selectedOpps.length > 0 && (
-              <div>
-                <p className="text-sm font-medium mb-2 flex items-center gap-2">
-                  <Target className="h-4 w-4" />
-                  Linked Opportunities ({selectedOpps.length})
-                </p>
+            <div>
+              <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                Linked Opportunities ({selectedOpps.length})
+              </p>
+              {selectedOpps.length > 0 ? (
                 <div className="space-y-2">
                   {selectedOpps.map((opp) => (
                     <div key={opp.id} className="border border-border rounded-lg p-3">
                       <p className="text-sm font-medium">{opp.title}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <StatusBadge status={opp.status} />
-                        <span className="text-xs text-muted-foreground">{formatCurrency(opp.estimatedValue)}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatCurrency(opp.estimatedValue)}
+                        </span>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <EmptyState
+                  title="No linked opportunities"
+                  description="This contact has not entered any active recovery workflow."
+                  className="py-6"
+                />
+              )}
+            </div>
 
             <div>
               <p className="text-sm font-medium mb-2">Notes</p>

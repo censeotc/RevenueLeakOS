@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { TopBar } from "@/components/layout/top-bar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
-import { demoBusiness, demoUsers } from "@/lib/demo-data";
+import { demoBusiness, demoUsers } from "@/services/seededDataService";
+import { useToast } from "@/components/ui/toast";
 import {
   Building2,
   Users,
@@ -29,7 +30,15 @@ const settingsSections = [
 ];
 
 export default function SettingsPage() {
+  const { pushToast } = useToast();
   const [activeSection, setActiveSection] = useState("business");
+  const showSavedToast = (section: string) => {
+    pushToast({
+      title: "Settings updated",
+      description: `${section} changes saved in demo mode.`,
+      variant: "success",
+    });
+  };
 
   return (
     <div>
@@ -103,7 +112,9 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className="flex justify-end">
-                    <Button size="sm">Save Changes</Button>
+                    <Button size="sm" onClick={() => showSavedToast("Business profile")}>
+                      Save Changes
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -211,7 +222,9 @@ export default function SettingsPage() {
                     <label className="text-sm">Include booking link in auto-reply</label>
                   </div>
                   <div className="flex justify-end">
-                    <Button size="sm">Save</Button>
+                    <Button size="sm" onClick={() => showSavedToast("Messaging settings")}>
+                      Save
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -242,7 +255,9 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className="flex justify-end">
-                    <Button size="sm">Save Rules</Button>
+                    <Button size="sm" onClick={() => showSavedToast("Attribution rules")}>
+                      Save Rules
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -271,7 +286,9 @@ export default function SettingsPage() {
                     <textarea className="w-full rounded-lg border border-input px-3 py-2 text-sm bg-background min-h-[60px]" defaultValue="You have been unsubscribed from North Shore Heating & Plumbing messages. Reply START to re-subscribe." />
                   </div>
                   <div className="flex justify-end">
-                    <Button size="sm">Save</Button>
+                    <Button size="sm" onClick={() => showSavedToast("Compliance settings")}>
+                      Save
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -299,7 +316,9 @@ export default function SettingsPage() {
                     </div>
                   ))}
                   <div className="flex justify-end">
-                    <Button size="sm">Save Preferences</Button>
+                    <Button size="sm" onClick={() => showSavedToast("Notification preferences")}>
+                      Save Preferences
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

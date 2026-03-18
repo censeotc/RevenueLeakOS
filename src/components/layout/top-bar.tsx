@@ -1,14 +1,20 @@
 "use client";
 
 import { Bell, Search } from "lucide-react";
-import { DEMO_BUSINESS_NAME } from "@/lib/demo-session";
+import { useDemoSession } from "@/components/providers/demo-session-provider";
+import { demoAlerts } from "@/services/seededDataService";
 
 export function TopBar({ title }: { title: string }) {
+  const { session } = useDemoSession();
+  const unreadAlertCount = demoAlerts.filter((alert) => !alert.read).length;
+
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-white px-6">
       <div>
         <h1 className="text-lg font-semibold text-foreground">{title}</h1>
-        <p className="text-xs text-muted-foreground">{DEMO_BUSINESS_NAME}</p>
+        <p className="text-xs text-muted-foreground">
+          {session?.business.name ?? "RevenueLeak OS Demo"}
+        </p>
       </div>
       <div className="flex items-center gap-3">
         <div className="relative">
@@ -21,7 +27,11 @@ export function TopBar({ title }: { title: string }) {
         </div>
         <button className="relative rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground">
           <Bell className="h-5 w-5" />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
+          {unreadAlertCount > 0 ? (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-white">
+              {unreadAlertCount}
+            </span>
+          ) : null}
         </button>
       </div>
     </header>

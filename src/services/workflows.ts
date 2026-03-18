@@ -1,4 +1,4 @@
-import { sendSMS, simulateInboundCall, simulateInboundSMS } from "./twilio";
+import { sendSMS, simulateInboundCall, simulateInboundSMS } from "./twilioMockService";
 
 export interface MissedCallWorkflowInput {
   callerNumber: string;

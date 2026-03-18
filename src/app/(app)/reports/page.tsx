@@ -2,8 +2,13 @@
 
 import { TopBar } from "@/components/layout/top-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { demoReportSnapshots, demoOpportunities, demoBookings } from "@/lib/demo-data";
 import { formatCurrency, formatMinutes } from "@/lib/utils";
+import {
+  getCurrentVsPreviousSnapshot,
+  getReportSnapshots,
+  getRevenueSummary,
+  getWorkflowComparison,
+} from "@/services/reportingService";
 import {
   DollarSign,
   TrendingUp,
@@ -15,8 +20,10 @@ import {
 } from "lucide-react";
 
 export default function ReportsPage() {
-  const current = demoReportSnapshots[0];
-  const previous = demoReportSnapshots[1];
+  const snapshots = getReportSnapshots();
+  const { current, previous } = getCurrentVsPreviousSnapshot();
+  const revenueSummary = getRevenueSummary();
+  const workflowComparison = getWorkflowComparison();
 
   const delta = (curr: number, prev: number) => {
     if (prev === 0) return 0;
@@ -55,34 +62,6 @@ export default function ReportsPage() {
       delta: delta(previous.avgResponseMinutes, current.avgResponseMinutes),
       icon: Clock,
       color: "bg-amber-50 text-amber-600",
-    },
-  ];
-
-  const missedCallOpps = demoOpportunities.filter((o) => o.type === "missed_call");
-  const estimateOpps = demoOpportunities.filter((o) => o.type === "estimate_rescue");
-  const reactivationOpps = demoOpportunities.filter((o) => o.type === "reactivation");
-
-  const workflowComparison = [
-    {
-      name: "Missed Call Recovery",
-      opportunities: missedCallOpps.length,
-      recovered: missedCallOpps.filter((o) => ["booked", "won"].includes(o.status)).length,
-      value: missedCallOpps.reduce((sum, o) => sum + o.estimatedValue, 0),
-      recoveredValue: missedCallOpps.filter((o) => o.actualValue).reduce((sum, o) => sum + (o.actualValue || 0), 0),
-    },
-    {
-      name: "Estimate Rescue",
-      opportunities: estimateOpps.length,
-      recovered: estimateOpps.filter((o) => ["booked", "won"].includes(o.status)).length,
-      value: estimateOpps.reduce((sum, o) => sum + o.estimatedValue, 0),
-      recoveredValue: estimateOpps.filter((o) => o.actualValue).reduce((sum, o) => sum + (o.actualValue || 0), 0),
-    },
-    {
-      name: "Reactivation",
-      opportunities: reactivationOpps.length,
-      recovered: reactivationOpps.filter((o) => ["booked", "won"].includes(o.status)).length,
-      value: reactivationOpps.reduce((sum, o) => sum + o.estimatedValue, 0),
-      recoveredValue: reactivationOpps.filter((o) => o.actualValue).reduce((sum, o) => sum + (o.actualValue || 0), 0),
     },
   ];
 
@@ -142,14 +121,18 @@ export default function ReportsPage() {
                     <p className="text-sm font-medium">Direct Revenue Recovered</p>
                     <p className="text-xs text-muted-foreground">From won opportunities</p>
                   </div>
-                  <p className="text-xl font-bold text-emerald-600">{formatCurrency(current.revenueRecovered)}</p>
+                  <p className="text-xl font-bold text-emerald-600">
+                    {formatCurrency(revenueSummary.directRecovered)}
+                  </p>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                   <div>
                     <p className="text-sm font-medium">Revenue Influenced</p>
                     <p className="text-xs text-muted-foreground">Bookings within attribution window</p>
                   </div>
-                  <p className="text-xl font-bold">{formatCurrency(current.revenueInfluenced)}</p>
+                  <p className="text-xl font-bold">
+                    {formatCurrency(revenueSummary.influenced)}
+                  </p>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                   <div>
@@ -157,11 +140,7 @@ export default function ReportsPage() {
                     <p className="text-xs text-muted-foreground">Active opportunities total</p>
                   </div>
                   <p className="text-xl font-bold text-blue-600">
-                    {formatCurrency(
-                      demoOpportunities
-                        .filter((o) => !["won", "lost", "closed"].includes(o.status))
-                        .reduce((sum, o) => sum + o.estimatedValue, 0)
-                    )}
+                    {formatCurrency(revenueSummary.activePipeline)}
                   </p>
                 </div>
               </div>
@@ -252,9 +231,9 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {demoReportSnapshots.map((snap, i) => {
+              {snapshots.map((snap, i) => {
                 const periodLabel = i === 0 ? "Current Period" : i === 1 ? "Previous Period" : "2 Periods Ago";
-                const maxMinutes = Math.max(...demoReportSnapshots.map((s) => s.avgResponseMinutes));
+                const maxMinutes = Math.max(...snapshots.map((s) => s.avgResponseMinutes));
                 return (
                   <div key={i} className="flex items-center gap-4">
                     <span className="text-sm w-32 shrink-0">{periodLabel}</span>
