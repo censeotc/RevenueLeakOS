@@ -4,7 +4,7 @@ import { getToken } from "next-auth/jwt";
 import { canAccessPath } from "@/lib/auth/permissions";
 import { UserRoleValue } from "@/lib/domain/types";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (!pathname.startsWith("/app")) {
