@@ -1,0 +1,298 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER    @map("owner")
+  MANAGER  @map("manager")
+  CSR      @map("csr")
+  READONLY @map("readonly")
+}
+
+enum OpportunityType {
+  MISSED_CALL     @map("missed_call")
+  ESTIMATE_RESCUE @map("estimate_rescue")
+  REACTIVATION    @map("reactivation")
+}
+
+enum OpportunityStatus {
+  OPEN      @map("open")
+  ATTEMPTED @map("attempted")
+  RESPONDED @map("responded")
+  BOOKED    @map("booked")
+  WON       @map("won")
+  LOST      @map("lost")
+  CLOSED    @map("closed")
+}
+
+enum CallDisposition {
+  MISSED      @map("missed")
+  AFTER_HOURS @map("after_hours")
+  ABANDONED   @map("abandoned")
+  RESPONDED   @map("responded")
+  BOOKED      @map("booked")
+  LOST        @map("lost")
+}
+
+enum EstimateStatus {
+  OPEN      @map("open")
+  STALE     @map("stale")
+  ENROLLED  @map("enrolled")
+  RESPONDED @map("responded")
+  BOOKED    @map("booked")
+  LOST      @map("lost")
+}
+
+enum CampaignStatus {
+  DRAFT     @map("draft")
+  ACTIVE    @map("active")
+  PAUSED    @map("paused")
+  COMPLETED @map("completed")
+}
+
+enum TemplateStatus {
+  DRAFT    @map("draft")
+  ACTIVE   @map("active")
+  ARCHIVED @map("archived")
+}
+
+enum MessageChannel {
+  SMS   @map("sms")
+  EMAIL @map("email")
+}
+
+enum BookingSource {
+  MISSED_CALL     @map("missed_call")
+  ESTIMATE_RESCUE @map("estimate_rescue")
+  REACTIVATION    @map("reactivation")
+  MANUAL          @map("manual")
+}
+
+enum IntegrationProvider {
+  TWILIO          @map("twilio")
+  JOBBER          @map("jobber")
+  HOUSECALL_PRO   @map("housecall_pro")
+  SERVICE_TITAN   @map("service_titan")
+  GMAIL           @map("gmail")
+  OUTLOOK         @map("outlook")
+  GOOGLE_CALENDAR @map("google_calendar")
+  CSV_IMPORT      @map("csv_import")
+}
+
+enum ConnectionStatus {
+  CONNECTED    @map("connected")
+  DISCONNECTED @map("disconnected")
+  ERROR        @map("error")
+}
+
+model Business {
+  id                             String                  @id
+  name                           String
+  timezone                       String
+  staleEstimateDays              Int
+  attributionWindowDays          Int
+  highValueThreshold             Int
+  duplicateMissedCallWindowHours Int
+  phone                          String?
+  website                        String?
+  createdAt                      DateTime                @default(now())
+  updatedAt                      DateTime                @updatedAt
+  users                          User[]
+  contacts                       Contact[]
+  opportunities                  Opportunity[]
+  callEvents                     CallEvent[]
+  estimates                      Estimate[]
+  campaigns                      Campaign[]
+  templates                      Template[]
+  bookings                       Booking[]
+  integrationConnections         IntegrationConnection[]
+  reportSnapshots                ReportSnapshot[]
+}
+
+model User {
+  id         String   @id
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  email      String   @unique
+  phone      String?
+  role       UserRole
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([businessId, role])
+}
+
+model Contact {
+  id              String         @id
+  businessId      String
+  business        Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  firstName       String
+  lastName        String
+  email           String?
+  phone           String
+  tags            String[]
+  lifecycleStage  String
+  lastServiceDate DateTime?
+  dormantSince    DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  opportunities   Opportunity[]
+  callEvents      CallEvent[]
+  estimates       Estimate[]
+  bookings        Booking[]
+
+  @@index([businessId, phone])
+}
+
+model Opportunity {
+  id                     String            @id
+  businessId             String
+  contactId              String
+  business               Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  contact                Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  type                   OpportunityType
+  status                 OpportunityStatus
+  title                  String
+  priority               String
+  valueCents             Int
+  directRevenueCents     Int               @default(0)
+  influencedRevenueCents Int               @default(0)
+  sourceLabel            String?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  lastTouchedAt          DateTime
+  estimates              Estimate[]
+  bookings               Booking[]
+  callEvents             CallEvent[]
+
+  @@index([businessId, type, status])
+}
+
+model CallEvent {
+  id              String          @id
+  businessId      String
+  contactId       String?
+  opportunityId   String?
+  business        Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  contact         Contact?        @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  opportunity     Opportunity?    @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  fromPhone       String
+  toPhone         String
+  disposition     CallDisposition
+  durationSeconds Int
+  afterHours      Boolean         @default(false)
+  startedAt       DateTime
+  summary         String?
+
+  @@index([businessId, disposition, startedAt])
+}
+
+model Estimate {
+  id                 String         @id
+  businessId         String
+  contactId          String
+  opportunityId      String?
+  business           Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  contact            Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  opportunity        Opportunity?   @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  number             String
+  serviceType        String
+  amountCents        Int
+  status             EstimateStatus
+  createdAt          DateTime
+  sentAt             DateTime
+  staleSince         DateTime?
+  enrolledInFollowUp Boolean        @default(false)
+
+  @@index([businessId, status, staleSince])
+}
+
+model Campaign {
+  id            String         @id
+  businessId    String
+  business      Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name          String
+  type          OpportunityType
+  status        CampaignStatus
+  audienceLabel String
+  segmentKey    String
+  description   String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  templates     Template[]
+
+  @@index([businessId, status])
+}
+
+model Template {
+  id         String         @id
+  businessId String
+  business   Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  channel    MessageChannel
+  status     TemplateStatus
+  subject    String?
+  body       String
+  variables  String[]
+  archivedAt DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  campaignId String?
+  campaign   Campaign?      @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@index([businessId, status])
+}
+
+model Booking {
+  id            String        @id
+  businessId    String
+  contactId     String
+  opportunityId String?
+  business      Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  contact       Contact       @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  opportunity   Opportunity?  @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  bookedAt      DateTime
+  serviceDate   DateTime
+  valueCents    Int
+  source        BookingSource
+  notes         String?
+
+  @@index([businessId, bookedAt])
+}
+
+model IntegrationConnection {
+  id           String             @id
+  businessId   String
+  business     Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  provider     IntegrationProvider
+  status       ConnectionStatus
+  accountLabel String?
+  connectedAt  DateTime?
+  lastTestedAt DateTime?
+  metadata     Json?
+
+  @@unique([businessId, provider])
+}
+
+model ReportSnapshot {
+  id                     String   @id
+  businessId             String
+  business               Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  snapshotDate           DateTime
+  directRevenueCents     Int
+  influencedRevenueCents Int
+  recoveredOpportunities Int
+  bookingsCreated        Int
+  avgResponseTimeMinutes Int
+  estimatesReopened      Int
+  customersReactivated   Int
+  workflowBreakdown      Json
+
+  @@index([businessId, snapshotDate])
+}

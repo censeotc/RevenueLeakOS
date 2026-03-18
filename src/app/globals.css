@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-slate-50 text-slate-950 antialiased;
+}
+
+a {
+  @apply text-brand-600 transition hover:text-brand-700;
+}
+
+::selection {
+  background: rgba(15, 111, 255, 0.18);
+}
