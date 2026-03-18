@@ -1,19 +1,15 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Zap } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
-  const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/dashboard";
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams?: { next?: string };
+}) {
+  const next = searchParams?.next || "/dashboard";
   const demoLoginHref = `/demo/login?next=${encodeURIComponent(next)}`;
-
-  const handleDemoLogin = () => {
-    window.location.assign(demoLoginHref);
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -48,9 +44,12 @@ export default function LoginPage() {
                 defaultValue="demo1234"
               />
             </div>
-            <Button className="w-full" onClick={handleDemoLogin}>
-              Sign In to Demo Workspace
-            </Button>
+            <form action="/demo/login" method="get">
+              <input type="hidden" name="next" value={next} />
+              <Button className="w-full" type="submit">
+                Sign In to Demo Workspace
+              </Button>
+            </form>
           </div>
 
           <div className="relative">
@@ -62,9 +61,12 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <Button variant="outline" className="w-full" onClick={handleDemoLogin}>
-            Enter Demo Walkthrough
-          </Button>
+          <form action="/demo/login" method="get">
+            <input type="hidden" name="next" value="/walkthrough" />
+            <Button variant="outline" className="w-full" type="submit">
+              Enter Demo Walkthrough
+            </Button>
+          </form>
 
           <p className="text-center text-xs text-muted-foreground">
             Don&apos;t have an account?{" "}

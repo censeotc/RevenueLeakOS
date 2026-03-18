@@ -19,22 +19,213 @@ import {
 } from "@/lib/demo-data";
 import { DEMO_BUSINESS_ID } from "@/lib/demo-session";
 
+export interface PilotBusiness {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  timezone: string;
+  staleEstimateDays: number;
+  attributionWindowDays: number;
+  highValueThreshold: number;
+  missedCallSuppressionHours: number;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+}
+
+export interface PilotUser {
+  id: string;
+  name: string;
+  email: string;
+  role: "owner" | "manager" | "csr" | "readonly";
+  phone: string;
+}
+
+export interface PilotContact {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  tags: string[];
+  source: string;
+  lastServiceDate?: Date;
+  lifetimeValue: number;
+}
+
+export interface PilotOpportunity {
+  id: string;
+  type: string;
+  status: string;
+  title: string;
+  description: string;
+  estimatedValue: number;
+  actualValue: number | null;
+  source: string;
+  contactId: string;
+  assignedToId: string | null;
+  createdAt: Date;
+  resolvedAt: Date | null;
+}
+
+export interface PilotCallEvent {
+  id: string;
+  callerNumber: string;
+  calledNumber: string;
+  direction: string;
+  status: string;
+  duration: number;
+  callerName: string | null;
+  callTime: Date;
+  contactId: string | null;
+  opportunityId: string | null;
+}
+
+export interface PilotEstimate {
+  id: string;
+  estimateNumber: string | null;
+  amount: number;
+  serviceType: string;
+  description: string;
+  status: string;
+  sentAt: Date;
+  viewedAt: Date | null;
+  followUpCount: number;
+  contactId: string;
+  opportunityId: string | null;
+}
+
+export interface PilotTemplate {
+  id: string;
+  name: string;
+  type: string;
+  subject: string | null;
+  body: string;
+  variables: string[];
+  isArchived: boolean;
+}
+
+export interface PilotCampaignStep {
+  id: string;
+  stepOrder: number;
+  type: string;
+  templateId: string | null;
+  delayHours: number;
+}
+
+export interface PilotCampaign {
+  id: string;
+  name: string;
+  description: string;
+  type: string;
+  status: string;
+  targetCount: number;
+  sentCount: number;
+  responseCount: number;
+  bookedCount: number;
+  steps: PilotCampaignStep[];
+}
+
+export interface PilotMessage {
+  id: string;
+  channel: string;
+  direction: string;
+  toNumber: string | null;
+  fromNumber: string | null;
+  body: string;
+  contactId: string | null;
+  opportunityId: string | null;
+  sentAt: Date;
+}
+
+export interface PilotBooking {
+  id: string;
+  title: string;
+  description: string;
+  scheduledAt: Date;
+  duration: number;
+  serviceType: string;
+  estimatedValue: number;
+  status: string;
+  contactId: string;
+  opportunityId: string | null;
+  bookedById: string | null;
+}
+
+export interface PilotActivityLog {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  metadata: Record<string, unknown>;
+  createdAt: Date;
+}
+
+export interface PilotIntegration {
+  provider: string;
+  status: string;
+  lastSyncAt: Date | null;
+  name: string;
+  description: string;
+  icon: string;
+}
+
+export interface PilotReportSnapshot {
+  periodStart: Date;
+  periodEnd: Date;
+  revenueInfluenced: number;
+  revenueRecovered: number;
+  opportunitiesCreated: number;
+  opportunitiesRecovered: number;
+  bookingsCreated: number;
+  avgResponseMinutes: number;
+  estimatesReopened: number;
+  customersReactivated: number;
+  missedCallsHandled: number;
+  conversionRate: number;
+}
+
+export interface PilotAlert {
+  id: string;
+  type: "missed_call" | "stale_estimate" | "campaign_complete" | "high_value";
+  title: string;
+  description: string;
+  timestamp: Date;
+  read: boolean;
+  linkTo?: string;
+}
+
+export interface PilotDashboardSummary {
+  revenueInfluenced: number;
+  opportunitiesRecovered: number;
+  bookingsCreated: number;
+  avgResponseMinutes: number;
+  estimatesReopened: number;
+  customersReactivated: number;
+}
+
 export interface PilotDataSnapshot {
-  business: typeof demoBusiness;
-  users: typeof demoUsers;
-  contacts: typeof demoContacts;
-  opportunities: typeof demoOpportunities;
-  callEvents: typeof demoCallEvents;
-  estimates: typeof demoEstimates;
-  templates: typeof demoTemplates;
-  campaigns: typeof demoCampaigns;
-  messages: typeof demoMessages;
-  bookings: typeof demoBookings;
-  activityLogs: typeof demoActivityLogs;
-  integrations: typeof demoIntegrations;
-  reportSnapshots: typeof demoReportSnapshots;
-  alerts: typeof demoAlerts;
-  dashboardSummary: typeof fallbackDashboardSummary;
+  business: PilotBusiness;
+  users: PilotUser[];
+  contacts: PilotContact[];
+  opportunities: PilotOpportunity[];
+  callEvents: PilotCallEvent[];
+  estimates: PilotEstimate[];
+  templates: PilotTemplate[];
+  campaigns: PilotCampaign[];
+  messages: PilotMessage[];
+  bookings: PilotBooking[];
+  activityLogs: PilotActivityLog[];
+  integrations: PilotIntegration[];
+  reportSnapshots: PilotReportSnapshot[];
+  alerts: PilotAlert[];
+  dashboardSummary: PilotDashboardSummary;
 }
 
 const integrationMeta: Record<
@@ -64,9 +255,22 @@ function buildFallbackSnapshot(): PilotDataSnapshot {
     callEvents: demoCallEvents,
     estimates: demoEstimates,
     templates: demoTemplates,
-    campaigns: demoCampaigns,
+    campaigns: demoCampaigns.map((campaign) => ({
+      ...campaign,
+      steps: campaign.steps.map((step) => ({
+        id: step.id,
+        stepOrder: step.stepOrder,
+        type: step.type,
+        templateId: step.templateId ?? null,
+        delayHours: step.delayHours,
+      })),
+    })),
     messages: demoMessages,
-    bookings: demoBookings,
+    bookings: demoBookings.map((booking) => ({
+      ...booking,
+      opportunityId: booking.opportunityId ?? null,
+      bookedById: booking.bookedById ?? null,
+    })),
     activityLogs: demoActivityLogs,
     integrations: demoIntegrations,
     reportSnapshots: demoReportSnapshots,
