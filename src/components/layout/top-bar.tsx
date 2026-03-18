@@ -1,14 +1,23 @@
 "use client";
 
 import { Bell, Search } from "lucide-react";
-import { DEMO_BUSINESS_NAME } from "@/lib/demo-session";
+import { useAuth } from "@/lib/auth-context";
 
 export function TopBar({ title }: { title: string }) {
+  const { session } = useAuth();
+
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-white px-6">
       <div>
         <h1 className="text-lg font-semibold text-foreground">{title}</h1>
-        <p className="text-xs text-muted-foreground">{DEMO_BUSINESS_NAME}</p>
+        <p className="text-xs text-muted-foreground">
+          {session?.businessName || "RevenueLeak OS"}
+          {session?.isDemo && (
+            <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+              DEMO
+            </span>
+          )}
+        </p>
       </div>
       <div className="flex items-center gap-3">
         <div className="relative">

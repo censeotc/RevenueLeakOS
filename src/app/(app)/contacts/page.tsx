@@ -2,17 +2,19 @@
 
 import { useState } from "react";
 import { TopBar } from "@/components/layout/top-bar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
+import { CSVImportDialog } from "@/components/csv-import-dialog";
 import { demoContacts, demoOpportunities } from "@/lib/demo-data";
-import { formatCurrency, daysSince, timeAgo } from "@/lib/utils";
+import { formatCurrency, daysSince } from "@/lib/utils";
 import { Users, Upload, Search, X, Target } from "lucide-react";
 
 export default function ContactsPage() {
   const [search, setSearch] = useState("");
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const allTags = Array.from(new Set(demoContacts.flatMap((c) => c.tags))).sort();
 
@@ -34,19 +36,17 @@ export default function ContactsPage() {
       <div className={`flex-1 flex flex-col ${selected ? "hidden lg:flex" : ""}`}>
         <TopBar title="Contacts" />
         <div className="p-6 space-y-4">
-          {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">{filtered.length} contacts</span>
             </div>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4 mr-1" />
               CSV Import
             </Button>
           </div>
 
-          {/* Search + Tags */}
           <div className="flex gap-3 items-center flex-wrap">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -59,11 +59,7 @@ export default function ContactsPage() {
               />
             </div>
             <div className="flex gap-1 flex-wrap">
-              <Button
-                variant={!tagFilter ? "default" : "outline"}
-                size="sm"
-                onClick={() => setTagFilter(null)}
-              >
+              <Button variant={!tagFilter ? "default" : "outline"} size="sm" onClick={() => setTagFilter(null)}>
                 All
               </Button>
               {allTags.map((tag) => (
@@ -79,7 +75,6 @@ export default function ContactsPage() {
             </div>
           </div>
 
-          {/* Contacts Table */}
           <Card>
             <CardContent className="p-0">
               <table className="w-full text-sm">
@@ -134,7 +129,6 @@ export default function ContactsPage() {
         </div>
       </div>
 
-      {/* Detail Panel */}
       {selected && (
         <div className="w-full lg:w-[420px] border-l border-border bg-white overflow-y-auto">
           <div className="sticky top-0 bg-white border-b border-border p-4 flex items-center justify-between z-10">
@@ -211,6 +205,8 @@ export default function ContactsPage() {
           </div>
         </div>
       )}
+
+      <CSVImportDialog type="contacts" open={importOpen} onClose={() => setImportOpen(false)} />
     </div>
   );
 }

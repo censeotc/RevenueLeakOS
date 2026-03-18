@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 import { TopBar } from "@/components/layout/top-bar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
+import { CSVImportDialog } from "@/components/csv-import-dialog";
 import { demoEstimates, getContactById } from "@/lib/demo-data";
 import { formatCurrency, daysSince } from "@/lib/utils";
-import { FileText, Clock, AlertTriangle, CheckCircle } from "lucide-react";
+import { FileText, Clock, AlertTriangle, CheckCircle, Upload } from "lucide-react";
 
 type StatusFilter = "all" | "stale" | "sent" | "viewed" | "follow_up" | "booked" | "expired";
 
 export default function EstimatesPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [enrolledIds, setEnrolledIds] = useState<Set<string>>(new Set());
+  const [importOpen, setImportOpen] = useState(false);
 
   const filtered = statusFilter === "all"
     ? demoEstimates
@@ -37,7 +39,6 @@ export default function EstimatesPage() {
     <div>
       <TopBar title="Estimates" />
       <div className="p-6 space-y-6">
-        {/* Summary */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-4">
@@ -93,21 +94,25 @@ export default function EstimatesPage() {
           </Card>
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-2 flex-wrap">
-          {(["all", "stale", "sent", "viewed", "follow_up", "booked", "expired"] as StatusFilter[]).map((s) => (
-            <Button
-              key={s}
-              variant={statusFilter === s ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter(s)}
-            >
-              {s === "all" ? "All" : s === "follow_up" ? "Follow Up" : s.charAt(0).toUpperCase() + s.slice(1)}
-            </Button>
-          ))}
+        <div className="flex items-center justify-between">
+          <div className="flex gap-2 flex-wrap">
+            {(["all", "stale", "sent", "viewed", "follow_up", "booked", "expired"] as StatusFilter[]).map((s) => (
+              <Button
+                key={s}
+                variant={statusFilter === s ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter(s)}
+              >
+                {s === "all" ? "All" : s === "follow_up" ? "Follow Up" : s.charAt(0).toUpperCase() + s.slice(1)}
+              </Button>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+            <Upload className="h-4 w-4 mr-1" />
+            CSV Import
+          </Button>
         </div>
 
-        {/* Estimates Table */}
         <Card>
           <CardContent className="p-0">
             <table className="w-full text-sm">
@@ -168,6 +173,8 @@ export default function EstimatesPage() {
           </CardContent>
         </Card>
       </div>
+
+      <CSVImportDialog type="estimates" open={importOpen} onClose={() => setImportOpen(false)} />
     </div>
   );
 }
