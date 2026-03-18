@@ -1,0 +1,19 @@
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export function formatCurrency(value: number | string) {
+  const amount = typeof value === "string" ? Number(value) : value;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+export function formatPercent(value: number) {
+  return `${(value * 100).toFixed(1)}%`;
+}
