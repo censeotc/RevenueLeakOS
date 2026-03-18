@@ -1,8 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSettingsView } from "@/lib/demo-data";
+import { requireRouteAccess } from "@/lib/guards";
 
 export default async function SettingsPage() {
+  await requireRouteAccess("/app/settings");
   const data = getSettingsView();
 
   return (

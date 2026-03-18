@@ -1,10 +1,13 @@
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getReportsView } from "@/lib/demo-data";
+import { requireRouteAccess } from "@/lib/guards";
 import { formatCurrency, formatDate, minutesLabel } from "@/lib/utils";
+import { reportingService } from "@/services/reporting-service";
 
 export default async function ReportsPage() {
-  const data = getReportsView();
+  await requireRouteAccess("/app/reports");
+  const data = reportingService.getReportsView();
 
   return (
     <div className="space-y-6">
@@ -22,40 +25,52 @@ export default async function ReportsPage() {
         <Card>
           <CardHeader><CardTitle>Workflow comparison</CardTitle><CardDescription>Direct vs influenced revenue by opportunity type.</CardDescription></CardHeader>
           <CardContent className="space-y-3">
-            {data.workflowComparison.map((item) => (
-              <div key={item.type} className="rounded-xl border border-zinc-200 p-4">
-                <div className="mb-2 flex items-center justify-between gap-3"><Badge variant="secondary">{item.type}</Badge><span className="text-sm font-medium">{item.recovered} recovered</span></div>
-                <div className="grid gap-2 text-sm text-zinc-500 sm:grid-cols-2">
-                  <p>Direct: <span className="font-medium text-zinc-900">{formatCurrency(item.directRevenue)}</span></p>
-                  <p>Influenced: <span className="font-medium text-zinc-900">{formatCurrency(item.influencedRevenue)}</span></p>
+            {data.workflowComparison.length ? (
+              data.workflowComparison.map((item) => (
+                <div key={item.type} className="rounded-xl border border-zinc-200 p-4">
+                  <div className="mb-2 flex items-center justify-between gap-3"><Badge variant="secondary">{item.type}</Badge><span className="text-sm font-medium">{item.recovered} recovered</span></div>
+                  <div className="grid gap-2 text-sm text-zinc-500 sm:grid-cols-2">
+                    <p>Direct: <span className="font-medium text-zinc-900">{formatCurrency(item.directRevenue)}</span></p>
+                    <p>Influenced: <span className="font-medium text-zinc-900">{formatCurrency(item.influencedRevenue)}</span></p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <EmptyState title="No workflow comparisons yet" description="Run a seeded workflow to generate direct and influenced revenue metrics." />
+            )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader><CardTitle>Conversion summary</CardTitle><CardDescription>Opportunity-to-booking conversion by workflow.</CardDescription></CardHeader>
           <CardContent className="space-y-3">
-            {data.conversionSummary.map((item) => (
-              <div key={item.type} className="rounded-xl border border-zinc-200 p-4">
-                <div className="mb-2 flex items-center justify-between gap-3"><Badge variant="info">{item.type}</Badge><span className="text-sm font-medium">{item.rate}%</span></div>
-                <p className="text-sm text-zinc-500">{item.converted} of {item.total} opportunities converted to booked / won.</p>
-              </div>
-            ))}
+            {data.conversionSummary.length ? (
+              data.conversionSummary.map((item) => (
+                <div key={item.type} className="rounded-xl border border-zinc-200 p-4">
+                  <div className="mb-2 flex items-center justify-between gap-3"><Badge variant="info">{item.type}</Badge><span className="text-sm font-medium">{item.rate}%</span></div>
+                  <p className="text-sm text-zinc-500">{item.converted} of {item.total} opportunities converted to booked / won.</p>
+                </div>
+              ))
+            ) : (
+              <EmptyState title="No conversion data yet" description="Bookings logged from calls, estimates, and reactivation will appear here." />
+            )}
           </CardContent>
         </Card>
       </div>
       <Card>
         <CardHeader><CardTitle>Report snapshots</CardTitle><CardDescription>Recent summary rows available for trending or BI export.</CardDescription></CardHeader>
         <CardContent className="space-y-3">
-          {data.reportSnapshots.map((snapshot) => (
-            <div key={snapshot.id} className="grid gap-3 rounded-xl border border-zinc-200 p-4 md:grid-cols-[0.9fr_0.9fr_0.8fr_0.7fr] md:items-center">
-              <p className="font-medium">{formatDate(snapshot.snapshotDate)}</p>
-              <p className="text-sm text-zinc-500">Influenced {formatCurrency(snapshot.influencedRevenueCents)}</p>
-              <p className="text-sm text-zinc-500">Recovered {snapshot.recoveredOpportunities}</p>
-              <p className="text-sm text-zinc-500">Bookings {snapshot.bookingsCreated}</p>
-            </div>
-          ))}
+          {data.reportSnapshots.length ? (
+            data.reportSnapshots.map((snapshot) => (
+              <div key={snapshot.id} className="grid gap-3 rounded-xl border border-zinc-200 p-4 md:grid-cols-[0.9fr_0.9fr_0.8fr_0.7fr] md:items-center">
+                <p className="font-medium">{formatDate(snapshot.snapshotDate)}</p>
+                <p className="text-sm text-zinc-500">Influenced {formatCurrency(snapshot.influencedRevenueCents)}</p>
+                <p className="text-sm text-zinc-500">Recovered {snapshot.recoveredOpportunities}</p>
+                <p className="text-sm text-zinc-500">Bookings {snapshot.bookingsCreated}</p>
+              </div>
+            ))
+          ) : (
+            <EmptyState title="No report snapshots" description="Daily snapshots will appear here once the pilot begins recording production activity." />
+          )}
         </CardContent>
       </Card>
     </div>

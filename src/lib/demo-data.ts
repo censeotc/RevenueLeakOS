@@ -21,19 +21,19 @@ import type {
   Template,
 } from "@/types/domain";
 
-const BUSINESS_ID = "biz_north_shore";
-const OWNER_ID = "user_owner";
-const LOCATION_ID = "loc_north_shore_main";
+export const BUSINESS_ID = "biz_north_shore";
+export const OWNER_ID = "user_owner";
+export const LOCATION_ID = "loc_north_shore_main";
 
 declare global {
   var revenueLeakStore: DemoDataset | undefined;
   var revenueLeakSequence: number | undefined;
 }
 
-const iso = (date: Date) => date.toISOString();
-const at = (base: Date, { days = 0, hours = 0, minutes = 0 }) =>
+export const iso = (date: Date) => date.toISOString();
+export const at = (base: Date, { days = 0, hours = 0, minutes = 0 }) =>
   new Date(base.getTime() + days * 86_400_000 + hours * 3_600_000 + minutes * 60_000);
-const nameOf = (contact: Contact) => `${contact.firstName} ${contact.lastName}`;
+export const nameOf = (contact: Contact) => `${contact.firstName} ${contact.lastName}`;
 const newest = <T extends { createdAt?: string; startedAt?: string; snapshotDate?: string }>(rows: T[]) =>
   [...rows].sort((a, b) =>
     (b.createdAt ?? b.startedAt ?? b.snapshotDate ?? "").localeCompare(
@@ -314,16 +314,16 @@ export function getStore() {
   return globalThis.revenueLeakStore;
 }
 
-const nextId = (prefix: string) => {
+export const nextId = (prefix: string) => {
   globalThis.revenueLeakSequence = (globalThis.revenueLeakSequence ?? 500) + 1;
   return `${prefix}_${globalThis.revenueLeakSequence}`;
 };
 
-const getUser = (id: string) => getStore().users.find((row) => row.id === id);
-const getContact = (id: string) => getStore().contacts.find((row) => row.id === id);
-const getOpportunity = (id: string) => getStore().opportunities.find((row) => row.id === id);
+export const getUser = (id: string) => getStore().users.find((row) => row.id === id);
+export const getContact = (id: string) => getStore().contacts.find((row) => row.id === id);
+export const getOpportunity = (id: string) => getStore().opportunities.find((row) => row.id === id);
 
-function addActivity(row: Omit<ActivityLog, "id" | "businessId" | "createdAt"> & { createdAt?: string }) {
+export function addActivity(row: Omit<ActivityLog, "id" | "businessId" | "createdAt"> & { createdAt?: string }) {
   getStore().activityLogs.unshift({
     id: nextId("activity"),
     businessId: BUSINESS_ID,
@@ -359,7 +359,7 @@ export const mockTwilioService = {
   },
 };
 
-function determineSegment(contact: Contact): ReactivationSegmentKey | null {
+export function determineSegment(contact: Contact): ReactivationSegmentKey | null {
   const now = new Date();
   if (contact.dormantSince && new Date(contact.dormantSince) <= at(now, { days: -365 })) return "no_service_12_months";
   if (contact.lastServiceDate && new Date(contact.lastServiceDate) <= at(now, { days: -365 })) return "maintenance_due";
@@ -368,7 +368,7 @@ function determineSegment(contact: Contact): ReactivationSegmentKey | null {
   return null;
 }
 
-const setOpportunityStatus = (opportunity: Opportunity, status: OpportunityStatus, closed = false) => {
+export const setOpportunityStatus = (opportunity: Opportunity, status: OpportunityStatus, closed = false) => {
   const now = iso(new Date());
   opportunity.status = status;
   opportunity.updatedAt = now;
@@ -376,7 +376,7 @@ const setOpportunityStatus = (opportunity: Opportunity, status: OpportunityStatu
   opportunity.closedAt = closed ? now : undefined;
 };
 
-function ensureEstimateOpportunity(estimate: Estimate) {
+export function ensureEstimateOpportunity(estimate: Estimate) {
   const store = getStore();
   const existing = estimate.opportunityId ? store.opportunities.find((row) => row.id === estimate.opportunityId) : undefined;
   if (existing) return existing;
@@ -759,6 +759,7 @@ export const appNav = [
   { href: "/app/templates", label: "Templates" },
   { href: "/app/integrations", label: "Integrations" },
   { href: "/app/settings", label: "Settings" },
+  { href: "/app/walkthrough", label: "Walkthrough" },
 ] as const;
 
 export function getDashboardData() {

@@ -1,11 +1,14 @@
 import Link from "next/link";
 
+import { EmptyState } from "@/components/empty-state";
 import { ReactivationLauncher } from "@/components/interactive";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getReactivationView } from "@/lib/demo-data";
+import { requireRouteAccess } from "@/lib/guards";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default async function ReactivationPage({ searchParams }: { searchParams?: Promise<{ segment?: string }> }) {
+  await requireRouteAccess("/app/reactivation");
   const params = (await searchParams) ?? {};
   const segment = (["no_service_12_months", "maintenance_due", "membership_renewal", "replacement_cycle"] as const).includes((params.segment ?? "no_service_12_months") as never)
     ? (params.segment as "no_service_12_months" | "maintenance_due" | "membership_renewal" | "replacement_cycle")
@@ -41,22 +44,26 @@ export default async function ReactivationPage({ searchParams }: { searchParams?
         <CardContent className="space-y-4">
           <ReactivationLauncher segmentKey={data.activeSegment.key} estimatedValue={data.activeSegment.estimatedValue} />
           <div className="space-y-3">
-            {data.activeSegment.contacts.map((contact) => (
-              <div key={contact.id} className="grid gap-3 rounded-xl border border-zinc-200 p-4 lg:grid-cols-[0.9fr_0.7fr_0.7fr] lg:items-center">
-                <div>
-                  <p className="font-medium">{contact.firstName} {contact.lastName}</p>
-                  <p className="text-sm text-zinc-500">{contact.phone}</p>
+            {data.activeSegment.contacts.length ? (
+              data.activeSegment.contacts.map((contact) => (
+                <div key={contact.id} className="grid gap-3 rounded-xl border border-zinc-200 p-4 lg:grid-cols-[0.9fr_0.7fr_0.7fr] lg:items-center">
+                  <div>
+                    <p className="font-medium">{contact.firstName} {contact.lastName}</p>
+                    <p className="text-sm text-zinc-500">{contact.phone}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Last service</p>
+                    <p className="text-xs text-zinc-500">{formatDate(contact.lastServiceDate ?? contact.dormantSince)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Tags</p>
+                    <p className="text-xs text-zinc-500">{contact.tags.join(", ")}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium">Last service</p>
-                  <p className="text-xs text-zinc-500">{formatDate(contact.lastServiceDate ?? contact.dormantSince)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Tags</p>
-                  <p className="text-xs text-zinc-500">{contact.tags.join(", ")}</p>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <EmptyState title="No contacts in this segment" description="This seeded segment is currently empty. Switch to another segment or launch from a more populated audience." />
+            )}
           </div>
         </CardContent>
       </Card>

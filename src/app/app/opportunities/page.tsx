@@ -1,9 +1,11 @@
 import Link from "next/link";
 
+import { EmptyState } from "@/components/empty-state";
 import { OpportunityDetailCard } from "@/components/interactive";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getOpportunitiesView } from "@/lib/demo-data";
+import { requireRouteAccess } from "@/lib/guards";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 const badgeVariant = (status: string) => {
@@ -18,6 +20,7 @@ export default async function OpportunitiesPage({
 }: {
   searchParams?: Promise<{ filter?: string }>;
 }) {
+  await requireRouteAccess("/app/opportunities");
   const params = (await searchParams) ?? {};
   const filter = params.filter === "missed_call" || params.filter === "estimate_rescue" || params.filter === "reactivation" ? params.filter : "all";
   const data = getOpportunitiesView(filter);
@@ -45,27 +48,31 @@ export default async function OpportunitiesPage({
             <CardDescription>Every major workflow creates or updates one of these records.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {data.opportunities.map((opportunity) => (
-              <div key={opportunity.id} className="grid gap-3 rounded-xl border border-zinc-200 p-4 lg:grid-cols-[1.3fr_0.8fr_0.7fr_0.6fr] lg:items-center">
-                <div>
-                  <p className="font-medium">{opportunity.title}</p>
-                  <p className="text-sm text-zinc-500">{opportunity.contact ? `${opportunity.contact.firstName} ${opportunity.contact.lastName}` : "Unknown contact"}</p>
-                  <p className="mt-1 text-xs text-zinc-400">Created {formatDate(opportunity.createdAt)}</p>
+            {data.opportunities.length ? (
+              data.opportunities.map((opportunity) => (
+                <div key={opportunity.id} className="grid gap-3 rounded-xl border border-zinc-200 p-4 lg:grid-cols-[1.3fr_0.8fr_0.7fr_0.6fr] lg:items-center">
+                  <div>
+                    <p className="font-medium">{opportunity.title}</p>
+                    <p className="text-sm text-zinc-500">{opportunity.contact ? `${opportunity.contact.firstName} ${opportunity.contact.lastName}` : "Unknown contact"}</p>
+                    <p className="mt-1 text-xs text-zinc-400">Created {formatDate(opportunity.createdAt)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{formatCurrency(opportunity.influencedRevenueCents)}</p>
+                    <p className="text-xs text-zinc-500">Influenced value</p>
+                  </div>
+                  <div>
+                    <Badge variant={badgeVariant(opportunity.status)}>{opportunity.status}</Badge>
+                    <p className="mt-2 text-xs text-zinc-500">Owner: {opportunity.owner?.name ?? "Unassigned"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{opportunity.type}</p>
+                    <p className="text-xs text-zinc-500">{opportunity.latestMessage?.body ?? opportunity.description}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium">{formatCurrency(opportunity.influencedRevenueCents)}</p>
-                  <p className="text-xs text-zinc-500">Influenced value</p>
-                </div>
-                <div>
-                  <Badge variant={badgeVariant(opportunity.status)}>{opportunity.status}</Badge>
-                  <p className="mt-2 text-xs text-zinc-500">Owner: {opportunity.owner?.name ?? "Unassigned"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">{opportunity.type}</p>
-                  <p className="text-xs text-zinc-500">{opportunity.latestMessage?.body ?? opportunity.description}</p>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <EmptyState title="No matching opportunities" description="Adjust the workflow filter or trigger a demo workflow from the dashboard to create a new opportunity." actionLabel="Back to dashboard" actionHref="/app/dashboard" />
+            )}
           </CardContent>
         </Card>
 

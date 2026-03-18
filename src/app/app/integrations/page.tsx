@@ -1,10 +1,13 @@
 import { IntegrationActions } from "@/components/interactive";
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getIntegrationsView } from "@/lib/demo-data";
+import { requireRouteAccess } from "@/lib/guards";
 import { formatDate } from "@/lib/utils";
 
 export default async function IntegrationsPage() {
+  await requireRouteAccess("/app/integrations");
   const integrations = getIntegrationsView();
 
   return (
@@ -14,20 +17,24 @@ export default async function IntegrationsPage() {
         <h1 className="text-3xl font-semibold tracking-tight">Connection state for messaging and field-service systems</h1>
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {integrations.map((integration) => (
-          <Card key={integration.id}>
-            <CardHeader>
-              <div className="flex items-start justify-between gap-3">
-                <div><CardTitle>{integration.provider}</CardTitle><CardDescription>{integration.accountLabel ?? "No account connected"}</CardDescription></div>
-                <Badge variant={integration.status === "connected" ? "success" : integration.status === "error" ? "danger" : "secondary"}>{integration.status}</Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-zinc-500">Last tested {formatDate(integration.lastTestedAt)}</p>
-              <IntegrationActions provider={integration.provider} connectedLabel={integration.status} />
-            </CardContent>
-          </Card>
-        ))}
+        {integrations.length ? (
+          integrations.map((integration) => (
+            <Card key={integration.id}>
+              <CardHeader>
+                <div className="flex items-start justify-between gap-3">
+                  <div><CardTitle>{integration.provider}</CardTitle><CardDescription>{integration.accountLabel ?? "No account connected"}</CardDescription></div>
+                  <Badge variant={integration.status === "connected" ? "success" : integration.status === "error" ? "danger" : "secondary"}>{integration.status}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-zinc-500">Last tested {formatDate(integration.lastTestedAt)}</p>
+                <IntegrationActions provider={integration.provider} connectedLabel={integration.status} />
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <EmptyState title="No integrations configured" description="Connect Twilio or your field-service system to activate the pilot." />
+        )}
       </div>
     </div>
   );

@@ -1,11 +1,14 @@
 import { QuickActions } from "@/components/interactive";
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getDashboardData } from "@/lib/demo-data";
+import { requireRouteAccess } from "@/lib/guards";
 import { formatCurrency, formatDate, minutesLabel } from "@/lib/utils";
+import { reportingService } from "@/services/reporting-service";
 
 export default async function DashboardPage() {
-  const data = getDashboardData();
+  const session = await requireRouteAccess("/app/dashboard");
+  const data = reportingService.getDashboardData();
 
   const metrics = [
     { label: "Revenue Influenced", value: formatCurrency(data.summary.revenueInfluenced) },
@@ -49,7 +52,11 @@ export default async function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <QuickActions />
+            {session.user.role === "readonly" ? (
+              <EmptyState title="Read-only demo role" description="Switch to an owner, manager, or CSR role from the login page to run the seeded workflows." actionLabel="Switch role" actionHref="/login" />
+            ) : (
+              <QuickActions />
+            )}
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-xl border border-zinc-200 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">Open missed calls</p>
@@ -73,16 +80,20 @@ export default async function DashboardPage() {
             <CardDescription>Critical items surfaced from activity and workflow state.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {data.alerts.map((alert) => (
-              <div key={alert.id} className="rounded-xl border border-zinc-200 p-4">
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <Badge variant={alert.severity === "critical" ? "danger" : alert.severity === "warning" ? "warning" : "info"}>{alert.severity}</Badge>
-                  <span className="text-xs text-zinc-500">{formatDate(alert.createdAt)}</span>
+            {data.alerts.length ? (
+              data.alerts.map((alert) => (
+                <div key={alert.id} className="rounded-xl border border-zinc-200 p-4">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <Badge variant={alert.severity === "critical" ? "danger" : alert.severity === "warning" ? "warning" : "info"}>{alert.severity}</Badge>
+                    <span className="text-xs text-zinc-500">{formatDate(alert.createdAt)}</span>
+                  </div>
+                  <p className="font-medium">{alert.title}</p>
+                  <p className="mt-1 text-sm text-zinc-500">{alert.detail}</p>
                 </div>
-                <p className="font-medium">{alert.title}</p>
-                <p className="mt-1 text-sm text-zinc-500">{alert.detail}</p>
-              </div>
-            ))}
+              ))
+            ) : (
+              <EmptyState title="No active alerts" description="The seeded tenant currently has no workflow alerts that need escalation." />
+            )}
           </CardContent>
         </Card>
       </div>
@@ -93,18 +104,22 @@ export default async function DashboardPage() {
           <CardDescription>Recent bookings, messages, alerts, and campaign events across the unified opportunity pipeline.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {data.recentActivity.map((item) => (
-            <div key={item.id} className="flex flex-col gap-2 rounded-xl border border-zinc-200 p-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="font-medium">{item.title}</p>
-                <p className="text-sm text-zinc-500">{item.detail}</p>
+          {data.recentActivity.length ? (
+            data.recentActivity.map((item) => (
+              <div key={item.id} className="flex flex-col gap-2 rounded-xl border border-zinc-200 p-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="font-medium">{item.title}</p>
+                  <p className="text-sm text-zinc-500">{item.detail}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="secondary">{item.type}</Badge>
+                  <span className="text-xs text-zinc-500">{formatDate(item.createdAt)}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Badge variant="secondary">{item.type}</Badge>
-                <span className="text-xs text-zinc-500">{formatDate(item.createdAt)}</span>
-              </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <EmptyState title="No recent activity" description="Try the quick actions above to generate new workflow events in the seeded demo tenant." />
+          )}
         </CardContent>
       </Card>
     </div>

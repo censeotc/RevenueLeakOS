@@ -2,13 +2,20 @@ import { redirect } from "next/navigation";
 
 import { LoginForm } from "@/components/interactive";
 import { auth } from "@/lib/auth";
+import { getDemoAccountOptions } from "@/lib/auth";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ callbackUrl?: string }>;
+}) {
   const session = await auth();
+  const params = (await searchParams) ?? {};
+  const callbackUrl = params.callbackUrl?.startsWith("/") ? params.callbackUrl : "/app/dashboard";
   if (session) {
-    redirect("/app/dashboard");
+    redirect(callbackUrl);
   }
 
   return (
@@ -37,11 +44,11 @@ export default async function LoginPage() {
           <CardHeader>
             <CardTitle>Enter the demo tenant</CardTitle>
             <CardDescription>
-              Use the seeded owner credentials to enter the internal operating app. The default login is prefilled.
+              Use any seeded role to enter the internal operating app. Each role is wired to route protection and internal permission guards.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <LoginForm />
+            <LoginForm demoAccounts={getDemoAccountOptions()} callbackUrl={callbackUrl} />
           </CardContent>
         </Card>
       </div>

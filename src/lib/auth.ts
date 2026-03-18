@@ -47,7 +47,6 @@ export const authOptions: NextAuthOptions = {
         }
 
         const store = getStore();
-        const demoEmail = process.env.DEMO_USER_EMAIL ?? "owner@northshore.demo";
         const demoPassword = process.env.DEMO_USER_PASSWORD ?? "demo1234";
         const user = store.users.find((item) => item.email === credentials.email);
 
@@ -55,7 +54,7 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        if (credentials.email != demoEmail || credentials.password != demoPassword) {
+        if (credentials.password !== demoPassword) {
           return null;
         }
 
@@ -86,9 +85,19 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? "revenueleak-os-demo-secret",
 };
 
 export function auth() {
   return getServerSession(authOptions);
+}
+
+export function getDemoAccountOptions() {
+  return getStore().users.map((user) => ({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    password: process.env.DEMO_USER_PASSWORD ?? "demo1234",
+  }));
 }

@@ -4,9 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 
+import { canAccessRoute, getNavForRole } from "@/lib/access";
 import { appNav } from "@/lib/demo-data";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export function AppShell({
@@ -21,6 +23,8 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const roleNav = getNavForRole([...appNav], role as "owner" | "manager" | "csr" | "readonly");
+  const canAccessOnboarding = canAccessRoute(role as "owner" | "manager" | "csr" | "readonly", "/onboarding");
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-950">
@@ -32,7 +36,7 @@ export function AppShell({
             <p className="text-sm text-zinc-500">Revenue recovery cockpit for phone, estimates, and dormant demand.</p>
           </div>
           <nav className="space-y-1">
-            {appNav.map((item) => (
+            {roleNav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -44,15 +48,17 @@ export function AppShell({
                 {item.label}
               </Link>
             ))}
-            <Link
-              href="/onboarding"
-              className={cn(
-                "mt-4 block rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950",
-                pathname === "/onboarding" && "bg-zinc-950 text-white hover:bg-zinc-900 hover:text-white",
-              )}
-            >
-              Onboarding
-            </Link>
+            {canAccessOnboarding ? (
+              <Link
+                href="/onboarding"
+                className={cn(
+                  "mt-4 block rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950",
+                  pathname === "/onboarding" && "bg-zinc-950 text-white hover:bg-zinc-900 hover:text-white",
+                )}
+              >
+                Onboarding
+              </Link>
+            ) : null}
           </nav>
         </aside>
 
@@ -66,7 +72,11 @@ export function AppShell({
               <div className="flex items-center gap-3">
                 <div className="text-right">
                   <p className="text-sm font-medium">{userName}</p>
-                  <p className="text-xs uppercase tracking-[0.18em] text-zinc-500">{role}</p>
+                  <div className="mt-1 flex items-center justify-end gap-2">
+                    <Badge variant="secondary" className="uppercase tracking-[0.18em]">
+                      {role}
+                    </Badge>
+                  </div>
                 </div>
                 <Avatar>{userName.slice(0, 2).toUpperCase()}</Avatar>
                 <Button variant="outline" onClick={() => signOut({ callbackUrl: "/login" })}>

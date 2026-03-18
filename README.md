@@ -40,6 +40,7 @@ Every major workflow creates or updates an opportunity.
 - `/app/templates`
 - `/app/integrations`
 - `/app/settings`
+- `/app/walkthrough`
 - `/onboarding`
 
 ## Demo tenant
@@ -62,8 +63,12 @@ Includes:
 
 Default demo login:
 
-- email: `owner@northshore.demo`
-- password: `demo1234`
+- shared password: `demo1234`
+- seeded roles:
+  - `owner@northshore.demo`
+  - `ben.carter@northshore.demo`
+  - `chloe.reed@northshore.demo`
+  - `daniel.kim@northshore.demo`
 
 ## Local development
 
@@ -73,13 +78,27 @@ Default demo login:
    npm install
    ```
 
-2. Copy the environment template
+2. Start the app in demo mode
+
+   ```bash
+   npm run dev
+   ```
+
+3. Open `http://localhost:3000/login`
+
+The internal app now runs in demo mode without a database and without copying an `.env` file first. Auth falls back to demo-safe defaults for local development, and the UI reads from a seeded in-memory store.
+
+### Optional database-backed setup
+
+If you want to exercise the Prisma + PostgreSQL path instead of demo-only mode:
+
+1. Copy the environment template
 
    ```bash
    cp .env.example .env
    ```
 
-3. Start PostgreSQL and set `DATABASE_URL`
+2. Start PostgreSQL and set `DATABASE_URL`
 
    Example:
 
@@ -87,26 +106,18 @@ Default demo login:
    DATABASE_URL="postgresql://postgres:postgres@localhost:5432/revenueleak_os?schema=public"
    ```
 
-4. Generate Prisma client and push the schema
+3. Generate Prisma client and push the schema
 
    ```bash
    npm run db:generate
    npm run db:push
    ```
 
-5. Seed the demo tenant
+4. Seed the demo tenant
 
    ```bash
    npm run db:seed
    ```
-
-6. Start the app
-
-   ```bash
-   npm run dev
-   ```
-
-7. Open `http://localhost:3000/login`
 
 ## Demo-mode behavior
 

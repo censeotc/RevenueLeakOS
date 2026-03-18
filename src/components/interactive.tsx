@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 import type { CampaignStatus, OpportunityType } from "@/types/domain";
+import { useToast } from "@/components/toast-provider";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,68 +20,151 @@ async function postAction(payload: unknown) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
+
+  const result = await response.json().catch(() => null);
+
   if (!response.ok) {
-    throw new Error("Action failed");
+    throw new Error(result?.error ?? "Action failed");
   }
-  return response.json();
+
+  return result;
 }
 
-export function LoginForm() {
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Action failed.";
+}
+
+type DemoAccountOption = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  password: string;
+};
+
+export function LoginForm({
+  demoAccounts,
+  callbackUrl = "/app/dashboard",
+}: {
+  demoAccounts: DemoAccountOption[];
+  callbackUrl?: string;
+}) {
   const router = useRouter();
-  const [email, setEmail] = useState("owner@northshore.demo");
-  const [password, setPassword] = useState("demo1234");
+  const { pushToast } = useToast();
+  const defaultAccount = demoAccounts[0] ?? {
+    id: "default",
+    name: "Demo Owner",
+    email: "owner@northshore.demo",
+    role: "owner",
+    password: "demo1234",
+  };
+  const [email, setEmail] = useState(defaultAccount.email);
+  const [password, setPassword] = useState(defaultAccount.password);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   return (
-    <form
-      className="space-y-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        setError(null);
-        startTransition(async () => {
-          const result = await signIn("credentials", {
-            redirect: false,
-            email,
-            password,
-            callbackUrl: "/app/dashboard",
+    <div className="space-y-5">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-medium">Seeded demo roles</p>
+          <Badge variant="info">Shared password</Badge>
+        </div>
+        <div className="grid gap-3">
+          {demoAccounts.map((account) => (
+            <button
+              key={account.id}
+              type="button"
+              className="rounded-xl border border-zinc-200 p-4 text-left transition hover:border-zinc-950"
+              onClick={() => {
+                setEmail(account.email);
+                setPassword(account.password);
+              }}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-medium text-zinc-950">{account.name}</p>
+                  <p className="text-sm text-zinc-500">{account.email}</p>
+                </div>
+                <Badge variant="secondary">{account.role}</Badge>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <form
+        className="space-y-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          setError(null);
+          startTransition(async () => {
+            const result = await signIn("credentials", {
+              redirect: false,
+              email,
+              password,
+              callbackUrl,
+            });
+
+            if (result?.error) {
+              setError("Invalid demo credentials.");
+              pushToast({
+                title: "Demo sign-in failed",
+                description: "Use any seeded demo account with the shared password.",
+                tone: "error",
+              });
+              return;
+            }
+
+            pushToast({
+              title: "Signed in to demo tenant",
+              description: `Launching ${callbackUrl.replace("/app/", "") || "dashboard"} as ${email}.`,
+              tone: "success",
+            });
+            router.push(callbackUrl);
+            router.refresh();
           });
-          if (result?.error) {
-            setError("Invalid demo credentials.");
-            return;
-          }
-          router.push("/app/dashboard");
-          router.refresh();
-        });
-      }}
-    >
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Email</label>
-        <Input value={email} onChange={(event) => setEmail(event.target.value)} />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Password</label>
-        <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
-      </div>
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      <Button className="w-full" type="submit" disabled={isPending}>
-        {isPending ? "Signing in..." : "Enter demo tenant"}
-      </Button>
-    </form>
+        }}
+      >
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Email</label>
+          <Input value={email} onChange={(event) => setEmail(event.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Password</label>
+          <Input type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
+        </div>
+        {error ? <p className="text-sm text-red-600">{error}</p> : null}
+        <Button className="w-full" type="submit" disabled={isPending}>
+          {isPending ? "Signing in..." : "Enter demo tenant"}
+        </Button>
+      </form>
+    </div>
   );
 }
 
 export function QuickActions() {
   const router = useRouter();
-  const [message, setMessage] = useState<string | null>(null);
+  const { pushToast } = useToast();
   const [isPending, startTransition] = useTransition();
 
   const run = (payload: unknown, label: string) => {
     startTransition(async () => {
-      setMessage(null);
-      await postAction(payload);
-      setMessage(label);
-      router.refresh();
+      try {
+        await postAction(payload);
+        pushToast({
+          title: "Workflow updated",
+          description: label,
+          tone: "success",
+        });
+        router.refresh();
+      } catch (error) {
+        pushToast({
+          title: "Workflow action failed",
+          description: getErrorMessage(error),
+          tone: "error",
+        });
+      }
     });
   };
 
@@ -97,7 +181,7 @@ export function QuickActions() {
           Log booking
         </Button>
       </div>
-      {message ? <p className="text-sm text-zinc-500">{message}</p> : null}
+      <p className="text-sm text-zinc-500">Run the seeded demo workflows and watch calls, opportunities, and reports refresh together.</p>
     </div>
   );
 }
@@ -114,6 +198,7 @@ export function OpportunityDetailCard({
   notes: Array<{ id: string; body: string; createdAt: string; author?: string }>;
 }) {
   const router = useRouter();
+  const { pushToast } = useToast();
   const [note, setNote] = useState("");
   const [selectedOwner, setSelectedOwner] = useState(ownerUserId ?? users[0]?.id ?? "");
   const [isPending, startTransition] = useTransition();
@@ -140,8 +225,21 @@ export function OpportunityDetailCard({
               disabled={isPending}
               onClick={() =>
                 startTransition(async () => {
-                  await postAction({ action: "assign_owner", opportunityId, ownerUserId: selectedOwner });
-                  router.refresh();
+                  try {
+                    await postAction({ action: "assign_owner", opportunityId, ownerUserId: selectedOwner });
+                    pushToast({
+                      title: "Opportunity owner updated",
+                      description: "The opportunity assignment has been saved.",
+                      tone: "success",
+                    });
+                    router.refresh();
+                  } catch (error) {
+                    pushToast({
+                      title: "Owner update failed",
+                      description: getErrorMessage(error),
+                      tone: "error",
+                    });
+                  }
                 })
               }
             >
@@ -157,9 +255,22 @@ export function OpportunityDetailCard({
             disabled={isPending || !note.trim()}
             onClick={() =>
               startTransition(async () => {
-                await postAction({ action: "add_note", opportunityId, body: note.trim() });
-                setNote("");
-                router.refresh();
+                try {
+                  await postAction({ action: "add_note", opportunityId, body: note.trim() });
+                  setNote("");
+                  pushToast({
+                    title: "Note added",
+                    description: "The opportunity handoff note has been saved.",
+                    tone: "success",
+                  });
+                  router.refresh();
+                } catch (error) {
+                  pushToast({
+                    title: "Note failed",
+                    description: getErrorMessage(error),
+                    tone: "error",
+                  });
+                }
               })
             }
           >
@@ -184,11 +295,25 @@ export function OpportunityDetailCard({
 
 export function EstimateActions({ estimateId }: { estimateId: string }) {
   const router = useRouter();
+  const { pushToast } = useToast();
   const [isPending, startTransition] = useTransition();
   const run = (payload: unknown) =>
     startTransition(async () => {
-      await postAction(payload);
-      router.refresh();
+      try {
+        await postAction(payload);
+        pushToast({
+          title: "Estimate workflow updated",
+          description: "The estimate rescue state was updated.",
+          tone: "success",
+        });
+        router.refresh();
+      } catch (error) {
+        pushToast({
+          title: "Estimate action failed",
+          description: getErrorMessage(error),
+          tone: "error",
+        });
+      }
     });
 
   return (
@@ -211,6 +336,7 @@ export function EstimateActions({ estimateId }: { estimateId: string }) {
 
 export function ReactivationLauncher({ segmentKey, estimatedValue }: { segmentKey: string; estimatedValue: number }) {
   const router = useRouter();
+  const { pushToast } = useToast();
   const [isPending, startTransition] = useTransition();
 
   return (
@@ -220,8 +346,21 @@ export function ReactivationLauncher({ segmentKey, estimatedValue }: { segmentKe
         disabled={isPending}
         onClick={() =>
           startTransition(async () => {
-            await postAction({ action: "launch_reactivation", segmentKey });
-            router.refresh();
+            try {
+              await postAction({ action: "launch_reactivation", segmentKey });
+              pushToast({
+                title: "Reactivation launched",
+                description: "Seeded opportunities and outbound mock messages have been refreshed.",
+                tone: "success",
+              });
+              router.refresh();
+            } catch (error) {
+              pushToast({
+                title: "Launch failed",
+                description: getErrorMessage(error),
+                tone: "error",
+              });
+            }
           })
         }
       >
@@ -233,6 +372,7 @@ export function ReactivationLauncher({ segmentKey, estimatedValue }: { segmentKe
 
 export function CallActionPanel({ opportunityId }: { opportunityId?: string }) {
   const router = useRouter();
+  const { pushToast } = useToast();
   const [isPending, startTransition] = useTransition();
   if (!opportunityId) {
     return <p className="text-sm text-zinc-500">No linked opportunity on this call event.</p>;
@@ -245,8 +385,21 @@ export function CallActionPanel({ opportunityId }: { opportunityId?: string }) {
         disabled={isPending}
         onClick={() =>
           startTransition(async () => {
-            await postAction({ action: "simulate_reply" });
-            router.refresh();
+            try {
+              await postAction({ action: "simulate_reply", opportunityId });
+              pushToast({
+                title: "Reply simulated",
+                description: "The latest seeded SMS thread was updated.",
+                tone: "success",
+              });
+              router.refresh();
+            } catch (error) {
+              pushToast({
+                title: "Reply failed",
+                description: getErrorMessage(error),
+                tone: "error",
+              });
+            }
           })
         }
       >
@@ -258,8 +411,21 @@ export function CallActionPanel({ opportunityId }: { opportunityId?: string }) {
         disabled={isPending}
         onClick={() =>
           startTransition(async () => {
-            await postAction({ action: "log_booking", opportunityId });
-            router.refresh();
+            try {
+              await postAction({ action: "log_booking", opportunityId });
+              pushToast({
+                title: "Booking logged",
+                description: "The call opportunity now reflects booking attribution.",
+                tone: "success",
+              });
+              router.refresh();
+            } catch (error) {
+              pushToast({
+                title: "Booking failed",
+                description: getErrorMessage(error),
+                tone: "error",
+              });
+            }
           })
         }
       >
@@ -275,6 +441,7 @@ export function CampaignManager({
   campaigns: Array<{ id: string; name: string; status: CampaignStatus; type: OpportunityType; audienceLabel: string; steps: Array<{ id: string; stepOrder: number; channel: string; bodyPreview: string; delayHours: number }> }>;
 }) {
   const router = useRouter();
+  const { pushToast } = useToast();
   const [name, setName] = useState("New revenue rescue sequence");
   const [type, setType] = useState<OpportunityType>("missed_call");
   const [segmentKey, setSegmentKey] = useState("after_hours_callbacks");
@@ -334,8 +501,21 @@ export function CampaignManager({
               disabled={isPending}
               onClick={() =>
                 startTransition(async () => {
-                  await postAction({ action: "create_campaign", name, type, segmentKey, audienceLabel });
-                  router.refresh();
+                  try {
+                    await postAction({ action: "create_campaign", name, type, segmentKey, audienceLabel });
+                    pushToast({
+                      title: "Campaign draft created",
+                      description: "A new seeded draft campaign is ready for editing.",
+                      tone: "success",
+                    });
+                    router.refresh();
+                  } catch (error) {
+                    pushToast({
+                      title: "Campaign create failed",
+                      description: getErrorMessage(error),
+                      tone: "error",
+                    });
+                  }
                 })
               }
             >
@@ -369,8 +549,21 @@ export function CampaignManager({
                     disabled={isPending}
                     onClick={() =>
                       startTransition(async () => {
-                        await postAction({ action: "update_campaign_status", campaignId: campaign.id, status });
-                        router.refresh();
+                        try {
+                          await postAction({ action: "update_campaign_status", campaignId: campaign.id, status });
+                          pushToast({
+                            title: "Campaign updated",
+                            description: `${campaign.name} is now ${status}.`,
+                            tone: "success",
+                          });
+                          router.refresh();
+                        } catch (error) {
+                          pushToast({
+                            title: "Campaign update failed",
+                            description: getErrorMessage(error),
+                            tone: "error",
+                          });
+                        }
                       })
                     }
                   >
@@ -399,6 +592,7 @@ export function CampaignManager({
 
 export function TemplateActions({ templateId, archived }: { templateId: string; archived: boolean }) {
   const router = useRouter();
+  const { pushToast } = useToast();
   const [isPending, startTransition] = useTransition();
 
   return (
@@ -409,8 +603,21 @@ export function TemplateActions({ templateId, archived }: { templateId: string; 
         disabled={isPending}
         onClick={() =>
           startTransition(async () => {
-            await postAction({ action: "duplicate_template", templateId });
-            router.refresh();
+            try {
+              await postAction({ action: "duplicate_template", templateId });
+              pushToast({
+                title: "Template duplicated",
+                description: "A draft copy is now available in the template library.",
+                tone: "success",
+              });
+              router.refresh();
+            } catch (error) {
+              pushToast({
+                title: "Duplicate failed",
+                description: getErrorMessage(error),
+                tone: "error",
+              });
+            }
           })
         }
       >
@@ -422,8 +629,21 @@ export function TemplateActions({ templateId, archived }: { templateId: string; 
         disabled={isPending || archived}
         onClick={() =>
           startTransition(async () => {
-            await postAction({ action: "archive_template", templateId });
-            router.refresh();
+            try {
+              await postAction({ action: "archive_template", templateId });
+              pushToast({
+                title: "Template archived",
+                description: "The template has been removed from active use.",
+                tone: "success",
+              });
+              router.refresh();
+            } catch (error) {
+              pushToast({
+                title: "Archive failed",
+                description: getErrorMessage(error),
+                tone: "error",
+              });
+            }
           })
         }
       >
@@ -435,6 +655,7 @@ export function TemplateActions({ templateId, archived }: { templateId: string; 
 
 export function IntegrationActions({ provider, connectedLabel }: { provider: string; connectedLabel: string }) {
   const router = useRouter();
+  const { pushToast } = useToast();
   const [isPending, startTransition] = useTransition();
   return (
     <div className="space-y-2">
@@ -446,8 +667,21 @@ export function IntegrationActions({ provider, connectedLabel }: { provider: str
           disabled={isPending}
           onClick={() =>
             startTransition(async () => {
-              await postAction({ action: "toggle_integration", provider });
-              router.refresh();
+              try {
+                await postAction({ action: "toggle_integration", provider });
+                pushToast({
+                  title: "Integration status updated",
+                  description: `${provider.replaceAll("_", " ")} connection state changed.`,
+                  tone: "success",
+                });
+                router.refresh();
+              } catch (error) {
+                pushToast({
+                  title: "Integration update failed",
+                  description: getErrorMessage(error),
+                  tone: "error",
+                });
+              }
             })
           }
         >
@@ -459,8 +693,21 @@ export function IntegrationActions({ provider, connectedLabel }: { provider: str
           disabled={isPending}
           onClick={() =>
             startTransition(async () => {
-              await postAction({ action: "test_integration", provider });
-              router.refresh();
+              try {
+                await postAction({ action: "test_integration", provider });
+                pushToast({
+                  title: "Integration test complete",
+                  description: `${provider.replaceAll("_", " ")} responded successfully in mock mode.`,
+                  tone: "success",
+                });
+                router.refresh();
+              } catch (error) {
+                pushToast({
+                  title: "Integration test failed",
+                  description: getErrorMessage(error),
+                  tone: "error",
+                });
+              }
             })
           }
         >
